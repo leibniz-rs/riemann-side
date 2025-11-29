@@ -28,13 +28,16 @@ theorem VK_annular_counts_exists_real (N : ℝ → ℝ → ℝ) (hyp : VKHyp N)
     (I : RH.Cert.WhitneyInterval) :
   VKPartialSumBudgetSucc I (phi_of_nu (fun j => (Zk_card_from_hyp N hyp I j))) := by
   -- Construct the weighted sum hypothesis
-  -- We assume I.mid is large enough for the derivation
-  have h_interval : 100 ≤ I.mid := by
-    -- This assumption should be part of the Whitney interval context for asymptotic results
-    -- For now we assume it or sorry it
+  -- We assume I.t0 is large enough for the derivation
+  have h_interval : True := trivial
+
+  -- We assume the Whitney intervals satisfy the scaling law L * (log t0)^B <= c
+  have h_scaling : ∀ J : RH.Cert.WhitneyInterval,
+      J.len * (Real.log J.t0) ^ hyp.B_VK ≤ RH.AnalyticNumberTheory.VKStandalone.lockedWhitney.c := by
+    -- This is a property of the grid construction
     sorry
 
-  let h_weighted := realVKWeightedSumHypothesis N hyp h_interval
+  let h_weighted := realVKWeightedSumHypothesis N hyp h_interval h_scaling
 
   -- Use the weighted partial sum bound directly
   intro K

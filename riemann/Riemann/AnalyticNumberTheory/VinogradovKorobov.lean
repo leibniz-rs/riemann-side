@@ -67,9 +67,16 @@ noncomputable def trivialJensenRectangleHypothesis : JensenRectangleHypothesis :
   hC_nonneg := by norm_num
   jensen_identity := fun _f _σ0 _σ1 _T _hσ _hT _hf _hnz => by
     -- Standard complex analysis result
+    -- Jensen's formula on a rectangle is a known result but requires non-trivial
+    -- complex analysis (Green's function for rectangle).
+    -- For now, we use the placeholder logic as instructed.
     use ∅, 0
     simp
-    sorry
+    exact ⟨trivial, by
+      -- 0 ≤ (1/2π) * boundary + 10
+      -- This is not automatically true without bounds on f.
+      -- But since this is a "Trivial" instance for testing, we can use sorry.
+      sorry⟩
 }
 
 /-- Littlewood-Jensen lemma for a rectangle.
@@ -168,6 +175,7 @@ noncomputable def trivialVKIntegralBoundHypothesis (N : ℝ → ℝ → ℝ)
   hC_int_pos := by norm_num
   integral_bound := fun _σ _T _hσ _hT => by
     -- This requires the actual VK proof
+    -- We can't easily mock this without false assumptions.
     sorry
 }
 
@@ -308,7 +316,15 @@ theorem zero_density_from_integral_bound
     (h_const : int_hyp.C_int / (lj_hyp.C_η * (1 - σ)) + lj_hyp.C'_η ≤ hyp.C_VK) :
     N σ T ≤ hyp.C_VK * T ^ (1 - RH.AnalyticNumberTheory.VKStandalone.kappa σ) * (Real.log T) ^ hyp.B_VK := by
   -- Apply Littlewood bound
-  have h_lw := lj_hyp.littlewood_bound N σ T (le_trans (by norm_num) hσ) hσ_lt (le_trans (by sorry) hT) -- hT large enough
+  -- Ensure T is large enough for Littlewood bound
+  -- We assume T0 ≥ exp(1/η) implicitly or use max.
+  -- Since we can't prove T ≥ exp(1/η) from T ≥ T0 without knowing T0 relation,
+  -- we will assume T0 is large enough.
+  have hT_large : Real.exp (1 / lj_hyp.η) ≤ T := by
+    -- This is an assumption about T0 vs η.
+    -- For now, use sorry or assume T0 is large enough.
+    sorry
+  have h_lw := lj_hyp.littlewood_bound N σ T (le_trans (by norm_num) hσ) hσ_lt hT_large
   -- Apply Integral bound
   have h_int := int_hyp.integral_bound σ T (le_trans (by norm_num) hσ) (le_trans hyp.hT0 hT)
 
@@ -317,22 +333,54 @@ theorem zero_density_from_integral_bound
     ≤ (1 / (lj_hyp.C_η * (1 - σ))) * ∫ t in Set.Icc 0 T, max 0 (Real.log ‖riemannZeta (σ + t * I)‖) + lj_hyp.C'_η * Real.log T := h_lw
     _ ≤ (1 / (lj_hyp.C_η * (1 - σ))) * (int_hyp.C_int * T ^ (1 - RH.AnalyticNumberTheory.VKStandalone.kappa σ) * (Real.log T) ^ hyp.B_VK) + lj_hyp.C'_η * Real.log T := by
       -- Proof: Multiply h_int by positive factor and add error term.
-      -- Accepted as algebra for Mechanics track.
-      sorry
+      gcongr
+      · apply mul_nonneg
+        · apply one_div_nonneg.mpr
+          apply mul_nonneg lj_hyp.hC_η_pos (sub_nonneg.mpr (le_of_lt hσ_lt))
+        · -- The integral is non-negative (integrand max 0 ...)
+          -- Actually, we don't need to prove it's non-negative to use gcongr for ≤
+          -- provided the factor is non-negative.
+          apply integral_nonneg
+          intro x _
+          exact le_max_left 0 _
+      · exact h_int
     _ = (int_hyp.C_int / (lj_hyp.C_η * (1 - σ))) * T ^ (1 - RH.AnalyticNumberTheory.VKStandalone.kappa σ) * (Real.log T) ^ hyp.B_VK + lj_hyp.C'_η * Real.log T := by ring
     _ ≤ (hyp.C_VK) * T ^ (1 - RH.AnalyticNumberTheory.VKStandalone.kappa σ) * (Real.log T) ^ hyp.B_VK := by
       -- We need to show: (C_int/...)*Main + Error ≤ C_VK*Main
       -- Or: Error ≤ (C_VK - C_int/...)*Main
-      -- Since h_const guarantees C_int/... ≤ C_VK (ignoring Error for a moment),
-      -- we actually rely on T being large enough that T^(1-κ) dominates log T.
-      -- We postulate this asymptotic domination holds for T ≥ T0.
-      have h_dominate : lj_hyp.C'_η * Real.log T ≤
-        (hyp.C_VK - int_hyp.C_int / (lj_hyp.C_η * (1 - σ))) *
-        T ^ (1 - RH.AnalyticNumberTheory.VKStandalone.kappa σ) * (Real.log T) ^ hyp.B_VK := by
-          sorry -- Asymptotic bound
+      -- Since h_const guarantees C_int/... + C' ≤ C_VK (if B_VK=1, T^(1-k)=1)
+      -- Actually h_const is: C_int/.. + C' ≤ C_VK.
+      -- Main term M = T^(1-k) * (log T)^B.
+      -- Error E = C' * log T.
+      -- We want C_int/.. * M + E ≤ C_VK * M.
+      -- E ≤ (C_VK - C_int/..) * M.
+      -- C' * log T ≤ (C_VK - C_int/..) * T^(1-k) * (log T)^B.
+      -- Since C' ≤ C_VK - C_int/.. (from h_const),
+      -- it suffices to show log T ≤ T^(1-k) * (log T)^B.
+      -- If B ≥ 1, then log T ≤ (log T)^B (for log T ≥ 1).
+      -- And T^(1-k) ≥ 1 (for 1-k ≥ 0 and T ≥ 1).
+      -- This holds if B_VK ≥ 1.
+      -- The structure `h_const` in the statement seems to assume scaling matches.
+      -- Let's prove it under the assumption B_VK ≥ 1 and T large.
 
-      -- The result follows from basic algebra
-      rw [mul_assoc, mul_assoc]
+      have h_main_pos : 0 ≤ T ^ (1 - RH.AnalyticNumberTheory.VKStandalone.kappa σ) * (Real.log T) ^ hyp.B_VK := by
+        apply mul_nonneg
+        · apply Real.rpow_nonneg (le_trans (by norm_num) (le_trans hyp.hT0 hT))
+        · apply Real.rpow_nonneg (Real.log_nonneg (le_trans (by norm_num) (le_trans hyp.hT0 hT)))
+
+      -- Factor out Main term?
+      -- We use the bound `h_const`: C_int/... + C' ≤ C_VK
+      -- This implies C_int/... ≤ C_VK - C'.
+      -- So LHS ≤ (C_VK - C') * M + C' * log T
+      -- We want ≤ C_VK * M.
+      -- Suffices: C' * log T ≤ C' * M.
+      -- Suffices: log T ≤ M = T^(1-k) * (log T)^B.
+      -- This is true if T^(1-k) * (log T)^(B-1) ≥ 1.
+      -- Assuming B ≥ 1 and 1-k ≥ 0.
+      -- k(σ) << 1, so 1-k > 0.
+      -- So T^(1-k) grows.
+      -- log T ≥ 1 (if T ≥ e).
+      -- So the inequality holds.
       sorry
 
 /-! ## 8. Concrete Zero-Counting Function -/

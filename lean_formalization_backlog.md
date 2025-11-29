@@ -71,6 +71,28 @@ These tracks are logically independent and can be worked on by separate agents.
         - The sum $\sum_k B(k+1) \|f(k+1) - f(k)\|$ must be converted to an integral bound using the mean value theorem for $f(n) = n^{-\sigma}$.
         - The integral $\int_1^X u^{-(1+\sigma)} (Au^{1-\theta} t^\theta + Bu^{1/2}) du$ then evaluates to the target bound.
         - ✅ Telescoping sum control is done: `sum_power_diff_telescope` now gives the $\|n^{-\sigma} - (n+1)^{-\sigma}\|$ bounds, so the remaining steps reduce to the integral estimate and Abel summation bookkeeping.
+        - ⛔ **New blocker:** Need a `partial_summation_norm_bound_from_one` variant whose boundary term uses the same positive cutoff as the Ford bound. With the current range-shifted lemma, the boundary term scales like $(m : ℝ)^{1-θ} (m-1)^{-σ}$ for $m = ⌊X⌋₊$, which can exceed the desired $X^{1-θ-σ}$ when $σ$ is close to $1$. Without this sharpened Abel summation statement we cannot fit the constants demanded in the hypothesis.
+
+    5.  **Solution approach for the blocker (Abel summation from index 1):**
+        The fix requires two new lemmas in `ExponentialSums.lean`:
+
+        - **`partial_summation_identity_from_one`**: Abel summation for `Finset.Icc 1 N`:
+          \[
+            \sum_{n \in \text{Icc } 1\, N} a(n) f(n) = A(N) f(N) - \sum_{k \in \text{Ico } 1\, N} A(k)(f(k+1) - f(k))
+          \]
+          where $A(k) = \sum_{n \in \text{Icc } 1\, k} a(n)$. **Key:** boundary term uses $f(N)$ not $f(N-1)$.
+
+        - **`partial_summation_norm_bound_from_one`**: The norm bound version with hypotheses:
+          - `hS_bound : ∀ k, 1 ≤ k → k ≤ N → ‖∑ n ∈ Icc 1 k, a n‖ ≤ B k`
+          - Conclusion: `‖∑ n ∈ Icc 1 N, a n * f n‖ ≤ B N * ‖f N‖ + ∑ k ∈ Ico 1 N, B k * ‖f (k+1) - f k‖`
+
+        **Why this fixes the blocker:** The Ford hypothesis bounds `∑_{n ∈ range (k+1)} n^{-it}`. Since `0^{-it} = 0`, this equals `∑_{n ∈ Icc 1 k} n^{-it}`. Using the new lemma, the boundary term becomes `B(N) * ‖f(N)‖ = B(N) * N^{-σ}` where both factors use the same index `N`. This avoids the mismatch where the old formula had `B(N) * (N-1)^{-σ}`.
+
+        **Implementation steps:**
+        1. Add induction proof for `partial_summation_identity_from_one` using `Finset.Icc/Ico` union splitting
+        2. Add helper `ford_bound_on_Icc` converting range-based Ford bound to Icc-based bound
+        3. Add `dirichlet_term_zero_vanishes` showing `0^{-(σ + it)} = 0` for `t ≠ 0`
+        4. Rewire `dirichlet_poly_bound_from_exp_sum` to use the new machinery
 
 ### Track 2: Geometric Function Theory (Gap C - The Pairing)
 **Goal:** Prove the CR-Green machinery that ports boundary integrals to interior energy and handles the Blaschke neutralization.
