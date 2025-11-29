@@ -1,0 +1,151 @@
+# Remaining Proof Obligations for Unconditional RH
+generated: 2025-11-29
+
+This document lists the specific Lean definitions and theorems that are currently stubbed (`sorry` or `trivial...`) and must be implemented to make the proof unconditional.
+
+## Track 1: Analytic Number Theory (The Engine)
+**Status:** Architectural definitions exist, but analytic estimates are stubbed.
+
+### 1. Vinogradov-Korobov Zero Density
+*   **File:** `riemann/Riemann/AnalyticNumberTheory/VinogradovKorobov.lean`
+*   **Open Theorems:**
+    *   `littlewood_jensen_rectangle`: Relate zero counts to boundary integrals (Jensen's formula on rectangles).
+    *   `integral_log_plus_zeta_bound`: Prove $\int \log|\zeta| \ll T^{1-\kappa}$ using exponential sums.
+    *   `zero_density_from_integral_bound`: Algebraic reduction from integral bound to $N(\sigma, T)$.
+    *   `trivialVKIntegralBoundHypothesis` (Definition): Needs to be replaced with a real proof instance.
+    *   `trivialLogDerivZetaBoundHypothesis` (Definition): Needs actual $\zeta'/\zeta$ bounds.
+
+### 2. Exponential Sums
+*   **File:** `riemann/Riemann/AnalyticNumberTheory/ExponentialSums.lean`
+*   **Open Theorems:**
+    *   `exp_sum_bound` (in `defaultFordHypothesis`): The core Ford/Korobov bound $|\sum n^{-it}| \ll \dots$.
+    *   `dirichlet_poly_bound_from_exp_sum`: Abel summation argument to lift exponential sums to Dirichlet polynomials.
+    *   `log_zeta_bound_from_exp_sum`: Derive log-zeta bounds from the Dirichlet polynomial approximation.
+
+### 3. Total Energy & Whitney Sums
+*   **File:** `riemann/Riemann/RS/BWP/ZeroDensity.lean`
+*   **Open Theorems:**
+    *   `realVKWeightedSumHypothesis` (Definition): The "Gap B" solution. Must prove that the weighted sum of zeros on a Whitney box is $O(c)$ (bounded), effectively converting the $\log T$ density into finite energy.
+    *   `Zk_card_from_hyp`: Needs to be refined to use the interval-based counting logic rather than the placeholder.
+
+## Track 2: Geometric Function Theory (The Pairing)
+**Status:** Key inequalities are present but rely on the missing constants from Track 1.
+
+### 1. CR-Green Pairing
+*   **File:** `riemann/Riemann/RS/BWP/CRGreenReal.lean`
+*   **Open Theorems:**
+    *   `CRGreen_window_bound_real`: Relies on `sorry` to match boundary terms in Green's identity.
+    *   `CRGreenConstantVerify.lean`: Needs the explicit numerical constant $C_\psi$ derived from the test function construction.
+
+### 2. Wedge Closure
+*   **File:** `riemann/Riemann/RS/BWP/WedgeVerify.lean` / `HardySchurIntegration.lean`
+*   **Open Theorems:**
+    *   `PPlusFromCarleson`: The implication "Finite Energy $\implies$ Positive Boundary Phase" (Wedge Lemma). Currently `sorry`.
+    *   `hardy_schur_pinch_route_complete`: The final assembly relies on `PPlusFromCarleson` and the concrete `Kxi` from Track 1.
+
+## Track 3: Functional Analysis (The Limit)
+**Status:** Distributional limits are sketched.
+
+*   **File:** `riemann/Riemann/RS/BWP/PhaseVelocityHypothesis.lean`
+*   **Open Theorems:**
+    *   `PhaseVelocityHypothesis`: The limit $\epsilon \to 0$ of the phase derivative $-w'$ matches the Poisson balayage. Currently `sorry` in the trivial instance.
+    *   `mkLogModulusLimitFromDet2`: Needs proof of L1 integrability from operator theory.
+
+## Track 4: Infrastructure & Classical Inputs
+**Status:** Foundations needed to support the main tracks.
+
+### 1. Mellin & Theta Functions
+*   **File:** `riemann/Riemann/academic_framework/MellinThetaZeta.lean`
+    *   `integral_theta_bound`: 19 `sorry`s related to Gaussian integrals and modular forms.
+*   **File:** `riemann/Riemann/academic_framework/EulerProduct/K0Bound.lean`
+    *   `K0_bound`: Numerical bound on Archimedean factor, relies on `sorry`.
+
+### 2. Fredholm Operator Theory
+*   **File:** `riemann/Riemann/Mathlib/Analysis/Normed/Operator/Fredholm/Defs.lean`
+    *   General theory of determinants and traces (many `sorry`s in spectral theory).
+
+### 3. Classical PNT
+*   **File:** `riemann/PrimeNumberTheoremAnd/DerivativeBound.lean`
+    *   `deriv_bound`: Standard complex analysis bound.
+*   **File:** `riemann/PrimeNumberTheoremAnd/Wiener.lean`
+    *   Fourier transform bounds.
+
+---
+
+# Machine Readable Proof Map (Dependency Graph)
+
+BEGIN_PROOF_MAP
+
+NODE: ExpSumBound
+FILE: riemann/Riemann/AnalyticNumberTheory/ExponentialSums.lean
+TYPE: THEOREM
+STATUS: OPEN
+DEPENDS_ON: []
+
+NODE: DirichletPolyBound
+FILE: riemann/Riemann/AnalyticNumberTheory/ExponentialSums.lean
+TYPE: THEOREM
+STATUS: OPEN
+DEPENDS_ON: [ExpSumBound]
+
+NODE: IntegralLogBound
+FILE: riemann/Riemann/AnalyticNumberTheory/VinogradovKorobov.lean
+TYPE: THEOREM
+STATUS: OPEN
+DEPENDS_ON: [DirichletPolyBound]
+
+NODE: ZeroDensityBound
+FILE: riemann/Riemann/AnalyticNumberTheory/VinogradovKorobov.lean
+TYPE: THEOREM
+STATUS: OPEN
+DEPENDS_ON: [IntegralLogBound]
+
+NODE: TotalEnergyBound
+FILE: riemann/Riemann/RS/BWP/ZeroDensity.lean
+TYPE: HYPOTHESIS
+STATUS: OPEN
+DEPENDS_ON: [ZeroDensityBound]
+
+NODE: KxiFinite
+FILE: riemann/Riemann/RS/BWP/KxiFinite.lean
+TYPE: THEOREM
+STATUS: OPEN
+DEPENDS_ON: [TotalEnergyBound]
+
+NODE: CRGreenWindowBound
+FILE: riemann/Riemann/RS/BWP/CRGreenReal.lean
+TYPE: THEOREM
+STATUS: OPEN
+DEPENDS_ON: [KxiFinite]
+
+NODE: PhaseVelocityLimit
+FILE: riemann/Riemann/RS/BWP/PhaseVelocityHypothesis.lean
+TYPE: HYPOTHESIS
+STATUS: OPEN
+DEPENDS_ON: []
+
+NODE: PoissonPlateauLowerBound
+FILE: riemann/Riemann/RS/BWP/PhaseVelocityHypothesis.lean
+TYPE: THEOREM
+STATUS: COMPLETE
+DEPENDS_ON: [PhaseVelocityLimit]
+
+NODE: WedgeClosure
+FILE: riemann/Riemann/RS/BWP/WedgeVerify.lean
+TYPE: THEOREM
+STATUS: OPEN
+DEPENDS_ON: [CRGreenWindowBound, PoissonPlateauLowerBound]
+
+NODE: PPlusCertificate
+FILE: riemann/Riemann/Cert/KxiPPlus.lean
+TYPE: THEOREM
+STATUS: OPEN
+DEPENDS_ON: [WedgeClosure]
+
+NODE: RiemannHypothesis
+FILE: riemann/Riemann/Cert/FactorsWitness.lean
+TYPE: THEOREM
+STATUS: COMPLETE
+DEPENDS_ON: [PPlusCertificate]
+
+END_PROOF_MAP

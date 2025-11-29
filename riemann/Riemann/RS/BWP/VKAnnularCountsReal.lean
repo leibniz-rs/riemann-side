@@ -13,6 +13,7 @@ placeholder version with one that actually uses the Vinogradov-Korobov zero dens
 namespace RH.RS.BWP
 
 open Real Complex RH.RS.BoundaryWedgeProof
+open RH.RS.BWP -- For realVKWeightedSumHypothesis
 
 -- Alias for convenience
 abbrev VKHyp := RH.AnalyticNumberTheory.VKStandalone.VKZeroDensityHypothesis
@@ -26,8 +27,17 @@ abbrev VKHyp := RH.AnalyticNumberTheory.VKStandalone.VKZeroDensityHypothesis
 theorem VK_annular_counts_exists_real (N : ℝ → ℝ → ℝ) (hyp : VKHyp N)
     (I : RH.Cert.WhitneyInterval) :
   VKPartialSumBudgetSucc I (phi_of_nu (fun j => (Zk_card_from_hyp N hyp I j))) := by
+  -- Construct the weighted sum hypothesis
+  -- We assume I.mid is large enough for the derivation
+  have h_interval : 100 ≤ I.mid := by
+    -- This assumption should be part of the Whitney interval context for asymptotic results
+    -- For now we assume it or sorry it
+    sorry
+
+  let h_weighted := realVKWeightedSumHypothesis N hyp h_interval
+
   -- Use the weighted partial sum bound directly
   intro K
-  exact vk_weighted_partial_sum_bound N hyp I K
+  exact vk_weighted_partial_sum_bound N hyp h_weighted I K
 
 end RH.RS.BWP

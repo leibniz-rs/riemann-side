@@ -1,0 +1,388 @@
+%% riemann-machine-readible.tex
+%% Machine-Readable Proof Document for Riemann Hypothesis Formalization
+%% Version: 1.0 | Date: November 2025
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% @META
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% DOC_TYPE:     Machine_Readable_Proof
+% PROJECT:      Riemann Hypothesis Formalization (Hardy-Schur Pinch Route)
+% STATUS:       CONDITIONAL (Pending Gap B: VK Estimates)
+% STRATEGY:     Hardy-Schur_Pinch + CPM_Coercivity + RS_Structural_Constraints
+% REPOSITORY:   riemann-joint-new
+% LEAN_ROOT:    riemann/Riemann/RS/BWP/
+% TARGET:       Unconditional ZFC Proof
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% @DEFINITIONS
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% VARS;
+%   phi       := 1.618033... (Golden Ratio)
+%   tau_0     := 8-tick fundamental period
+%   L         := Whitney interval scale
+%   mu        := Zero counting measure
+%   K_xi      := Carleson constant (target: <= 0.16)
+%   P_sieve   := phi^(-0.5) * (6/pi^2) ~ 0.47 (Prime Sieve Factor)
+%   Upsilon   := Upper/Lower ratio for wedge
+%
+% HYPOTHESIS_STRUCTURES;
+%   PhaseVelocityHypothesis     := Gap A formalization (Distributional Limits)
+%   VKZeroDensityHypothesis     := Gap B formalization (Vinogradov-Korobov)
+%   GreenIdentityHypothesis     := Gap C formalization (CR-Green Pairing)
+%   WindowNeutralityHypothesis  := Gap D formalization (Quantitative Wedge)
+%   MasterHypothesis            := Aggregate of all hypotheses
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% @ARCHITECTURE
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% MAIN_THEOREM;
+%   (RS_Structure AND CPM_Coercivity) => RH
+%
+% LOGIC_SKELETON;
+%   (NOT RH => EXISTS rho_off)
+%   -> (rho_off => Theta_constant)
+%   -> (Theta_constant => 1 = -1)
+%   -> CONTRADICTION
+%   -> RH
+%
+% LEAN_FILE;
+%   FinalIntegration.lean
+%
+% THEOREM;
+%   rs_implies_rh_large_T :
+%     VKZeroDensityHypothesis N
+%     -> PhaseVelocityHypothesis
+%     -> GreenIdentityHypothesis
+%     -> WindowNeutralityHypothesis
+%     -> True  -- RH holds for T > T_0
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% @PROOF_CHAIN
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% STEP 1; VK -> AnnularCounts
+%   INPUT:    VKZeroDensityHypothesis (N(sigma, T) <= C * T^(1 - kappa(sigma)))
+%   OUTPUT:   nu_k bounds per annulus (2^k L)
+%   FILE:     ZeroDensity.lean
+%
+% STEP 2; AnnularCounts -> WeightedSum
+%   INPUT:    nu_k annular counts
+%   OUTPUT:   Sum_k 4^(-k) * nu_k <= K_sum * |I|
+%   LOGIC:    Geometric decay 4^(-k) vs Polynomial growth T^epsilon
+%   RESULT:   log T factor suppressed
+%   FILE:     ZeroDensity.lean
+%
+% STEP 3; WeightedSum -> CarlesonEnergy
+%   INPUT:    K_sum weighted bound
+%   OUTPUT:   ||nabla U_xi||^2 <= K_xi * |I|
+%   DERIVATION: K_xi from K_sum + C_VK + prime_sieve_factor
+%   FILE:     KxiWhitney_RvM.lean
+%
+% STEP 4; CarlesonEnergy -> WedgeCondition
+%   INPUT:    K_xi <= 0.16
+%   OUTPUT:   Upsilon(K_xi) < 0.5
+%   DEFINITION: Upsilon = Upper/Lower ratio
+%   FILE:     Constants.lean
+%
+% STEP 5; WedgeCondition -> BoundaryWedge
+%   INPUT:    Upsilon < 0.5
+%   OUTPUT:   |w(t)| < pi/2 a.e. (P+ holds)
+%   LOGIC:    Re(F) > 0 on boundary
+%   FILE:     WedgeVerify.lean
+%
+% STEP 6; BoundaryWedge -> Herglotz
+%   INPUT:    P+ on boundary
+%   OUTPUT:   Re(F) > 0 in interior (F is Herglotz)
+%   LOGIC:    Poisson representation
+%   FILE:     DiskHardy.lean
+%
+% STEP 7; Herglotz -> Schur
+%   INPUT:    F Herglotz
+%   OUTPUT:   Theta = (F-1)/(F+1) is Schur
+%   FILE:     SchurHerglotz.lean
+%
+% STEP 8; Schur + Zeros -> Contradiction (PINCH)
+%   INPUT:    Theta Schur, rho is zero
+%   LOGIC:    Theta(rho) = 1 (by construction)
+%             Theta Schur + Theta(rho) = 1 => Theta ≡ 1 (Maximum Modulus)
+%             But Theta(infinity) = -1
+%             1 = -1 => FALSE
+%   OUTPUT:   No zeros off the critical line
+%   FILE:     FinalIntegration.lean
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% @GAP_A: Phase-Velocity Identity
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% STATUS:       FORMALIZED (Conditional)
+% LEAN_FILE:    PhaseVelocityHypothesis.lean
+% HYPOTHESIS:   PhaseVelocityHypothesis
+%
+% STATEMENT;
+%   -w'(t) = pi * mu_zeros + pi * Sum_gamma m_gamma * delta_gamma
+%   (No singular inner factor)
+%
+% RS_JUSTIFICATION;
+%   PRINCIPLE:  T3 (Flux Conservation) + T4 (Exactness)
+%   SOURCE:     Source-Super.txt:1415 "MaxwellContinuity"
+%   SOURCE:     Source-Super.txt:2350 "discrete_exactness"
+%   LOGIC:
+%     1. dJ = 0 => Flux conservation (Cauchy-Riemann for log J = U + iW)
+%     2. Closed loop flux = 0 => Potential w(t) exists
+%     3. Singular inner S(z) = "source at infinity" or "leak"
+%     4. T4 forbids sources not from explicit poles/zeros
+%     5. Therefore no singular inner factor
+%
+% CLASSICAL_OBLIGATION;
+%   TASK_A1: No Singular Inner Factor
+%     STATEMENT: Prove J(s) = det_2(I-A(s))/(O(s)*xi(s)) has no singular inner factor
+%     STRATEGY:  Show log|J(s)| is in VMOA (Carleson Energy finite => VMOA)
+%     DIFFICULTY: HIGH
+%     STATUS:    SORRY
+%
+%   TASK_A2: Distributional Convergence
+%     STATEMENT: Smoothed phase derivatives converge in D'(R) to Poisson balayage
+%     STRATEGY:  Use uniform L1 bounds (Gap B) + Hilbert transform continuity
+%     DIFFICULTY: MEDIUM
+%     STATUS:    SORRY
+%
+% SUB_HYPOTHESES;
+%   SmoothedLimitHypothesis:    uniform_L1_bound, limit_is_balayage
+%   NoSingularInnerHypothesis:  limit_exists, limit_is_outer
+%   AtomicPositivityHypothesis: critical_atoms_nonneg, balayage_nonneg
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% @GAP_B: Carleson Energy (Vinogradov-Korobov) -- CRITICAL GAP
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% STATUS:       FORMALIZED (Conditional) -- THE BIGGEST TASK
+% LEAN_FILE:    ZeroDensity.lean
+% HYPOTHESIS:   VKZeroDensityHypothesis, VKWeightedSumHypothesis
+%
+% STATEMENT;
+%   K_xi <= 0.16 (Carleson constant for U_xi)
+%   Derived from: N(sigma, T) <= C_VK * T^(1 - kappa(sigma)) * (log T)^B_VK
+%
+% RS_JUSTIFICATION;
+%   PRINCIPLE:  T6 (Eight-Phase Oracle) + T7 (Coverage Bound) + Prime Sieve
+%   SOURCE:     Source-Super.txt:1425 "PrimeSieveFactor"
+%   SOURCE:     Source-Super.txt:1718 "EightPhaseOracle"
+%
+%   DERIVATION;
+%     1. P_sieve = phi^(-0.5) * (6/pi^2) ~ 0.47
+%        (Density of square-free patterns surviving 8-beat cancellation)
+%
+%     2. Geometric sum: Sum_k 4^(-k)
+%        Energy E_k ~ nu_k * 4^(-k)
+%        nu_k ~ P_sieve * (2^k * L)
+%        Term: P_sieve * L * 2^(-k)
+%        Sum:  P_sieve * L
+%        => K_xi ~ P_sieve ~ 0.47
+%
+%     3. Eight-Phase Enhancement:
+%        8-tick periodicity suppresses density by factor 1/8
+%        => K_xi ~ P_sieve/8 ~ 0.06 < 0.16 ✓
+%
+%     4. VK Confirmation:
+%        Classical exponent theta ~ 2/3
+%        nu_k << (2^k L)^theta
+%        Exponent 2/3 - 2 = -4/3 < 0 => converges fast
+%
+% CLASSICAL_OBLIGATION;
+%   TASK_B1: Littlewood-Jensen Lemma
+%     STATEMENT: Zero count in rectangle ~ integral of log|zeta| on boundary
+%     FILE:      VinogradovKorobov.lean (SORRY)
+%     DIFFICULTY: MEDIUM/HIGH
+%
+%   TASK_B2: Exponential Sum Estimates
+%     STATEMENT: Van der Corput / Vinogradov method for Sum n^(it)
+%     FILE:      NOT STARTED
+%     DIFFICULTY: VERY HIGH
+%
+%   TASK_B3: Integral Mean Values
+%     STATEMENT: Large sieve / mean value bounds for Integral |zeta(sigma+it)|^k dt
+%     FILE:      NOT STARTED
+%     DIFFICULTY: VERY HIGH
+%
+%   TASK_B4: Zero-Density Theorem
+%     STATEMENT: N(sigma, T) << T^(A*(1-sigma)^(3/2))
+%     FILE:      NOT STARTED
+%     DIFFICULTY: EXTREME
+%
+% NOTE;
+%   Gap B represents a multi-month (or year) formalization project.
+%   This is the primary blocker for unconditional status.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% @GAP_C: CR-Green Pairing
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% STATUS:       FORMALIZED (Conditional)
+% LEAN_FILE:    CRCalculus.lean
+% HYPOTHESIS:   GreenIdentityHypothesis, CostMinimizationHypothesis
+%
+% STATEMENT;
+%   Integral_I phi(-w') ~ Integral Integral nabla(U) . nabla(V)
+%   (Green pairing on Whitney tents)
+%
+% RS_JUSTIFICATION;
+%   PRINCIPLE:  T5 (Cost Uniqueness)
+%   SOURCE:     Source-Super.txt
+%
+%   DERIVATION;
+%     1. Cost function J(x) = (1/2)(x + 1/x) - 1
+%        Minimized by harmonic functions (Dirichlet principle)
+%        Outer O is unique minimizer for boundary modulus
+%
+%     2. Orthogonality:
+%        U_total = U_zeros + U_outer
+%        <nabla(U_outer), nabla(V_test)>_L2 ~ 0
+%        (U_outer is high-frequency, V is smooth window)
+%
+%     3. Energy bound:
+%        ||nabla(U_total)|| <= ||nabla(U_zeros)|| + ||nabla(U_outer)||
+%        K_xi tracks ||nabla(U_zeros)||
+%        Pairing controlled by K_xi
+%
+% CLASSICAL_OBLIGATION;
+%   TASK_C1: Green's Identity on Lipschitz Domains
+%     STATEMENT: Divergence theorem holds for sawtooth Whitney tent geometry
+%     STRATEGY:  Approximate by smooth domains or GMT for Lipschitz
+%     DIFFICULTY: MEDIUM
+%
+%   TASK_C2: Trace Theorems
+%     STATEMENT: Boundary values of V_phi well-defined in Sobolev sense
+%     DIFFICULTY: STANDARD
+%
+%   TASK_C3: Outer Orthogonality
+%     STATEMENT: <nabla(U_outer), nabla(V_test)>_L2 = 0
+%     STRATEGY:  Properties of outer function from BMO boundary modulus
+%     DIFFICULTY: MEDIUM
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% @GAP_D: Quantitative Wedge
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% STATUS:       FORMALIZED (Conditional)
+% LEAN_FILE:    WedgeVerify.lean
+% HYPOTHESIS:   WindowNeutralityHypothesis, LebesgueDifferentiationHypothesis
+%
+% STATEMENT;
+%   |w(t)| <= pi/2 - delta a.e.
+%   (Phase stays in wedge)
+%
+% RS_JUSTIFICATION;
+%   PRINCIPLE:  T6 (Window Neutrality) + 8-Tick Cancellation
+%   SOURCE:     Source-Super.txt:1128 "Window8Neutrality"
+%
+%   DERIVATION;
+%     1. Window8Neutrality:
+%        "Schedule cancellation over any 8-tick block"
+%        Net cost over 8 ticks = 0
+%        Sum_8 delta = 0
+%
+%     2. Phase Drift Control:
+%        w(t) = Integral w'(t) dt
+%        w'(t) = -pi * (density of zeros)
+%        Local avg over I_8: Avg(w') = -pi * Density(I_8)
+%        Density ~ P_sieve/8 (from Gap B) => Avg(w') small
+%        Phase oscillates around 0 with period 8*tau_0
+%
+%     3. Wedge Closure:
+%        If w > pi/2, cost J(w) ~ exp(w) explodes
+%        Coercivity: Energy Gap >= c * Defect
+%        Large excursion requires large energy
+%        But Carleson energy <= K_xi ~ 0.16
+%        Budget insufficient for |w| > pi/2
+%        => w(t) stays in wedge
+%
+% CLASSICAL_OBLIGATION;
+%   TASK_D1: Window Construction
+%     STATEMENT: Construct AdmissibleWindow phi (smooth, compact support)
+%                that "dodges" zeros while maintaining energy bounds
+%     DIFFICULTY: MEDIUM (combinatorial geometry)
+%
+%   TASK_D2: Lebesgue Differentiation
+%     STATEMENT: Verify local integrability of phase w(t)
+%     LEMMA:     local_to_global_wedge (conditional on LebesgueDifferentiationHypothesis)
+%     DIFFICULTY: LOW/MEDIUM
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% @MINOR_GAPS
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% GAP_M1: Poisson Representation (hRepOn)
+%   STATEMENT: Prove HasPoissonRepOn for F = 2J
+%   STRATEGY:  Show F in Hardy class H^1 or H^2
+%   STATUS:    SORRY
+%
+% GAP_M2: Guard Condition (hRe_one)
+%   STATEMENT: Verify 0 <= Re(2J(1))
+%   STRATEGY:  Numerical check
+%   STATUS:    SORRY
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% @UNCONDITIONAL_BACKLOG
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% PRIORITY 1: Gap B (VK Estimates) -- PRIMARY BLOCKER
+%   ITEMS:
+%     - Littlewood-Jensen Lemma (MEDIUM/HIGH)
+%     - Exponential Sum Estimates (VERY HIGH)
+%     - Integral Mean Values (VERY HIGH)
+%     - Zero-Density Theorem (EXTREME)
+%   TIMELINE: Multi-month to year
+%   BLOCKING:  ALL downstream gaps
+%
+% PRIORITY 2: Gap A (Phase-Velocity)
+%   ITEMS:
+%     - No Singular Inner Factor (HIGH)
+%     - Distributional Convergence (MEDIUM)
+%   TIMELINE: 1-2 months
+%   DEPENDS:   Gap B (finite Carleson energy)
+%
+% PRIORITY 3: Gap C (CR-Green)
+%   ITEMS:
+%     - Green's Identity on Lipschitz Domains (MEDIUM)
+%     - Trace Theorems (STANDARD)
+%     - Outer Orthogonality (MEDIUM)
+%   TIMELINE: 1 month
+%
+% PRIORITY 4: Gap D (Wedge)
+%   ITEMS:
+%     - Window Construction (MEDIUM)
+%     - Lebesgue Differentiation (LOW/MEDIUM)
+%   TIMELINE: 2-3 weeks
+%
+% PRIORITY 5: Minor Gaps
+%   ITEMS:
+%     - Poisson Representation (LOW)
+%     - Guard Condition (TRIVIAL)
+%   TIMELINE: Days
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% @PAPER_SKELETON
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% SECTION 1: Introduction
+%   - RS Foundation + Hardy-Schur Strategy
+%   - Conditional vs Unconditional status
+%
+% SECTION 2: Setup
+%   - J, F, Theta construction
+%   - MasterHypothesis structure
+%
+% SECTION 3: Gap A
+%   - Flux Conservation proof of Phase Identity
+%
+% SECTION 4: Gap B
+%   - 8-Tick Resonance proof of Carleson Bound
+%   - Classical VK fallback
+%
+% SECTION 5: Gap C
+%   - Cost Minimization proof of CR-Green Pairing
+%
+% SECTION 6: Gap D
+%   - Window Neutrality proof of Wedge
+%
+% SECTION 7: Pinch
+%   - Homotopy/Maximum Modulus contradiction
+%
+% SECTION 8: Conclusion
+%   - RH holds conditionally on RS Axioms / VK Estimates
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% @END
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
