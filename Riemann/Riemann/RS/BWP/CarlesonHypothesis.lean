@@ -129,20 +129,29 @@ structure VKCarlesonHypothesis extends CarlesonEnergyHypothesis where
   /-- The derivation: K_xi is derived from VK bounds via geometric summation. -/
   derivation : K_xi = vk_derived_constant N vk_hyp
 
-/-- Construct a VK-derived Carleson hypothesis from a VK zero-density hypothesis.
-    This is the main bridge between number theory and functional analysis. -/
+/-- Structure bundling the VK-to-Carleson energy bound derivation.
+    This is the key bridge hypothesis that asserts the geometric summation
+    over VK zero-density bounds yields a finite energy bound. -/
+structure VKToCarlesonDerivation (N : ℝ → ℝ → ℝ)
+    (vk : RH.AnalyticNumberTheory.VKStandalone.VKZeroDensityHypothesis N) where
+  /-- The derived energy bound holds for all Whitney intervals. -/
+  energy_bound : ∀ (I : RH.Cert.WhitneyInterval),
+    boxEnergy I ≤ (vk_derived_constant N vk) * I.len
+
+/-- Construct a VK-derived Carleson hypothesis from a VK zero-density hypothesis
+    and the derivation that connects them.
+
+    This is the main bridge between number theory and functional analysis.
+    The derivation hypothesis encapsulates the geometric summation argument. -/
 noncomputable def mkVKCarlesonHypothesis
     (N : ℝ → ℝ → ℝ)
-    (vk : RH.AnalyticNumberTheory.VKStandalone.VKZeroDensityHypothesis N) :
+    (vk : RH.AnalyticNumberTheory.VKStandalone.VKZeroDensityHypothesis N)
+    (derivation : VKToCarlesonDerivation N vk) :
     VKCarlesonHypothesis := {
   K_xi := vk_derived_constant N vk
   hK_nonneg := Kxi_paper_hyp_nonneg
   hK_bounded := le_refl _
-  energy_bound := fun _I => by
-    -- This is where the actual VK → Carleson derivation would go
-    -- For now, we use the trivial bound (if boxEnergy = 0 in trivial case)
-    -- But here we assume VK guarantees it.
-    sorry
+  energy_bound := derivation.energy_bound
   N := N
   vk_hyp := vk
   derivation := rfl

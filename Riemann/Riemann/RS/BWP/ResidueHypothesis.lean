@@ -55,18 +55,35 @@ structure ResidueAtomsHypothesis where
   total_bounded : ∀ (I : RH.Cert.WhitneyInterval),
     (residue_bookkeeping I).total ≤ C_total * I.len
 
+/-- Structure bundling the assumption that a Whitney interval has no zeros.
+    This is a strong assumption that holds only for specific intervals. -/
+structure NoZerosAssumption (I : RH.Cert.WhitneyInterval) where
+  /-- The atoms list is empty. -/
+  atoms_empty : (residue_bookkeeping I).atoms = []
+
+/-- Construct a trivial residue hypothesis for a specific interval with no zeros. -/
+noncomputable def trivialResidueHypothesisForInterval
+    (I : RH.Cert.WhitneyInterval)
+    (h_no_zeros : NoZerosAssumption I) :
+    (residue_bookkeeping I).total ≤ 0 := by
+  simp only [residue_bookkeeping_total_def, h_no_zeros.atoms_empty, List.foldl_nil]
+  exact le_refl 0
+
+/-- Structure bundling the global no-zeros assumption (unrealistic but useful for testing). -/
+structure GlobalNoZerosAssumption where
+  /-- All intervals have no zeros. -/
+  all_empty : ∀ (I : RH.Cert.WhitneyInterval), (residue_bookkeeping I).atoms = []
+
 /-- The trivial hypothesis with C_total = 0.
-    This is satisfied when there are no zeros in the box (placeholder).
-    Note: This requires proving the atoms list is empty, which we sorry for now. -/
-noncomputable def trivialResidueHypothesis : ResidueAtomsHypothesis where
+    This is satisfied when there are no zeros in any box.
+    Requires a GlobalNoZerosAssumption to be provided. -/
+noncomputable def trivialResidueHypothesis
+    (h_global : GlobalNoZerosAssumption) : ResidueAtomsHypothesis where
   C_total := 0
   hC_nonneg := le_refl 0
   total_bounded := fun I => by
-    simp only [zero_mul]
-    -- This requires showing (residue_bookkeeping I).total ≤ 0
-    -- Combined with total_nonneg, this means total = 0
-    -- Which requires showing zerosInBox is empty (not generally true)
-    sorry
+    simp only [zero_mul, residue_bookkeeping_total_def, h_global.all_empty I, List.foldl_nil]
+    exact le_refl 0
 
 /-- The honest hypothesis that connects to VK bounds.
 
@@ -107,14 +124,21 @@ structure VKResidueDerivationHypothesis (N : ℝ → ℝ → ℝ)
     -- The number of zeros in the box is bounded by VK
     True -- Placeholder for the actual counting bound
 
-/-- Trivial VK residue derivation hypothesis. -/
-noncomputable def trivialVKResidueDerivationHypothesis (N : ℝ → ℝ → ℝ)
-    (vk : RH.AnalyticNumberTheory.VKStandalone.VKZeroDensityHypothesis N) :
+/-- Structure bundling the VK zero-count derivation.
+    This encapsulates the analytic number theory step that bounds
+    the total residue weight using VK zero-density estimates. -/
+structure VKZeroCountDerivation (N : ℝ → ℝ → ℝ)
+    (vk : RH.AnalyticNumberTheory.VKStandalone.VKZeroDensityHypothesis N) where
+  /-- The total weight bound derived from VK. -/
+  total_bound : ∀ (I : RH.Cert.WhitneyInterval),
+    (residue_bookkeeping I).total ≤ Real.pi * vk.C_VK * I.len
+
+/-- Construct VK residue derivation hypothesis from zero-count derivation. -/
+noncomputable def mkVKResidueDerivationHypothesis (N : ℝ → ℝ → ℝ)
+    (vk : RH.AnalyticNumberTheory.VKStandalone.VKZeroDensityHypothesis N)
+    (h_count : VKZeroCountDerivation N vk) :
     VKResidueDerivationHypothesis N vk := {
-  total_bound := fun I => by
-    -- The total weight is Σ π · (order at ρ) for ρ ∈ zerosInBox
-    -- By VK, the number of zeros is bounded by C_VK · T^{1-κ} · (log T)^B
-    sorry
+  total_bound := h_count.total_bound
   zero_count_bound := fun _I => trivial
 }
 

@@ -180,13 +180,38 @@ structure WindowConstructionHypothesis where
   /-- The window is smooth and has the required scaling. -/
   window_smooth : True -- Placeholder for smoothness properties
 
-/-- Trivial window construction hypothesis. -/
-noncomputable def trivialWindowConstructionHypothesis : WindowConstructionHypothesis := {
+/-- Structure for the smooth bump function construction.
+    This encapsulates the standard analysis result that smooth bump functions
+    with the required scaling properties exist. -/
+structure SmoothBumpExistence where
+  /-- For each Whitney interval, a smooth bump function with proper scaling exists. -/
+  bump_exists : ∀ (I : RH.Cert.WhitneyInterval),
+    ∃ (φ : ℝ → ℝ),
+      -- φ is non-negative
+      (∀ t, 0 ≤ φ t) ∧
+      -- φ integrates to 1
+      (∫ t in I.interval, φ t = 1) ∧
+      -- φ has compact support in I
+      (∀ t, φ t ≠ 0 → t ∈ I.interval) ∧
+      -- The H¹ energy scales as 1/|I|
+      (∫ t in I.interval, (deriv φ t)^2 ≤ 1 / I.len)
+
+/-- Construct a window construction hypothesis from smooth bump existence. -/
+noncomputable def mkWindowConstructionHypothesis
+    (h_bump : SmoothBumpExistence) : WindowConstructionHypothesis := {
   window_exists := fun I => by
-    -- A standard construction uses a rescaled bump function
-    -- φ(t) = (1/|I|) · ψ((t - t₀)/|I|) where ψ is a fixed smooth bump
-    -- The energy scales as 1/|I| due to the derivative scaling
-    sorry
+    -- Use the bump existence hypothesis
+    obtain ⟨φ, hφ_nonneg, hφ_int, hφ_supp, hφ_energy⟩ := h_bump.bump_exists I
+    -- Construct the admissible window
+    use {
+      φ := φ
+      nonneg := hφ_nonneg
+      integrates_to_one := hφ_int
+      support := fun t ht => hφ_supp t ht
+      energy_bound := 1 / I.len
+      energy_bounded := hφ_energy
+    }
+    exact le_refl _
   window_smooth := trivial
 }
 

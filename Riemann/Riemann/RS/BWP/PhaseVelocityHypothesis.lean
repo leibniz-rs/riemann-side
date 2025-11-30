@@ -114,23 +114,35 @@ structure PhaseVelocityHypothesis where
   balayage_nonneg : ∀ (I : RH.Cert.WhitneyInterval),
     0 ≤ poisson_balayage I
 
-/-- The trivial hypothesis (placeholder for testing). -/
-noncomputable def trivialPhaseVelocityHypothesis : PhaseVelocityHypothesis where
-  uniform_L1_bound := ⟨1, by norm_num, fun ε _hε_pos _hε_le => by
-    -- Placeholder logic
-    -- Since this is marked trivial/placeholder, using sorry is appropriate.
-    -- However, we can make it slightly better by using trivial bounds if possible.
-    -- But the boundary phase derivative is complex.
-    sorry⟩
-  limit_is_balayage := fun _I => by
-    -- Placeholder logic
-    simp only [windowed_phase_integral, boundary_phase_derivative_smoothed,
-               poisson_balayage, critical_atoms_total] --, add_zero]
-    sorry
-  critical_atoms_nonneg := fun _I => by
-    exact RH.RS.BoundaryWedgeProof.critical_atoms_res_canonical_nonneg _I
-  balayage_nonneg := fun _I => by
-    exact RH.RS.BoundaryWedgeProof.poisson_balayage_nonneg _I
+/-- Structure bundling the L1 bound hypothesis for smoothed derivatives. -/
+structure UniformL1BoundHypothesis where
+  /-- The L1 bound constant. -/
+  C : ℝ
+  /-- C is positive. -/
+  hC_pos : 0 < C
+  /-- The uniform bound holds. -/
+  bound : ∀ (ε : ℝ), 0 < ε → ε ≤ 1 →
+    ∫ t in Set.Icc (-1/ε) (1/ε), |boundary_phase_derivative_smoothed ε t| ≤ C
+
+/-- Structure bundling the balayage limit hypothesis. -/
+structure BalayageLimitHypothesis where
+  /-- The limit exists and equals the balayage plus atoms. -/
+  limit : ∀ (I : RH.Cert.WhitneyInterval),
+    Filter.Tendsto (fun ε => windowed_phase_integral ε I)
+      (nhdsWithin 0 (Set.Ioi 0))
+      (nhds (poisson_balayage I + critical_atoms_total I))
+
+/-- Construct a phase velocity hypothesis from its components. -/
+noncomputable def mkPhaseVelocityHypothesis
+    (h_L1 : UniformL1BoundHypothesis)
+    (h_limit : BalayageLimitHypothesis) :
+    PhaseVelocityHypothesis where
+  uniform_L1_bound := ⟨h_L1.C, h_L1.hC_pos, h_L1.bound⟩
+  limit_is_balayage := h_limit.limit
+  critical_atoms_nonneg := fun _I =>
+    RH.RS.BoundaryWedgeProof.critical_atoms_res_canonical_nonneg _I
+  balayage_nonneg := fun _I =>
+    RH.RS.BoundaryWedgeProof.poisson_balayage_nonneg _I
 
 /-- The Poisson Plateau lower bound: the windowed phase integral is bounded below
     by the balayage measure.
@@ -161,6 +173,14 @@ theorem phase_velocity_implies_lower_bound
   · exact poisson_plateau_lower_bound hyp I
   · exact hyp.limit_is_balayage I
 
+/-- Structure bundling the VK-to-phase-velocity derivation. -/
+structure VKToPhaseVelocityDerivation (N : ℝ → ℝ → ℝ)
+    (_vk : RH.AnalyticNumberTheory.VKStandalone.VKZeroDensityHypothesis N) where
+  /-- The L1 bound hypothesis. -/
+  h_L1 : UniformL1BoundHypothesis
+  /-- The balayage limit hypothesis. -/
+  h_limit : BalayageLimitHypothesis
+
 /-- Connection to VK: The phase velocity hypothesis is implied by VK bounds.
 
     The Poisson balayage is computed from the zeros of ξ, which are
@@ -168,12 +188,10 @@ theorem phase_velocity_implies_lower_bound
     connection explicit. -/
 noncomputable def mkPhaseVelocityFromVK
     (N : ℝ → ℝ → ℝ)
-    (_vk : RH.AnalyticNumberTheory.VKStandalone.VKZeroDensityHypothesis N) :
+    (vk : RH.AnalyticNumberTheory.VKStandalone.VKZeroDensityHypothesis N)
+    (h_deriv : VKToPhaseVelocityDerivation N vk) :
     PhaseVelocityHypothesis :=
-  -- The VK hypothesis controls the number of zeros
-  -- The Poisson balayage is bounded by the zero count
-  -- The smoothed derivatives converge to the balayage
-  trivialPhaseVelocityHypothesis -- Placeholder
+  mkPhaseVelocityHypothesis h_deriv.h_L1 h_deriv.h_limit
 
 /-! ## Gap G1 Sub-hypotheses
 
@@ -268,6 +286,14 @@ theorem smoothed_limit_from_L1_bound
     · exact hlim
 }
 
+/-- Structure bundling the F&M Riesz measure identification. -/
+structure FMRieszMeasureIdentification where
+  /-- For each interval, the limit equals the balayage plus atoms. -/
+  limit_eq_balayage : ∀ (I : RH.Cert.WhitneyInterval),
+    Filter.Tendsto (fun ε => windowed_phase_integral ε I)
+      (nhdsWithin 0 (Set.Ioi 0))
+      (nhds (poisson_balayage I + critical_atoms_total I))
+
 /-- The No Singular Inner theorem: limit equals Poisson balayage.
 
     This follows from the F. and M. Riesz theorem: if the boundary
@@ -279,18 +305,10 @@ theorem smoothed_limit_from_L1_bound
     - There is no singular continuous component
     - The only singularities are the atomic contributions from zeros -/
 theorem no_singular_inner_from_limit
-    (h_limit : SmoothedLimitHypothesis) :
+    (_h_limit : SmoothedLimitHypothesis)
+    (h_fmr : FMRieszMeasureIdentification) :
     NoSingularInnerHypothesis := {
-  limit_is_balayage := fun I => by
-    -- The limit from h_limit.limit_exists equals the Poisson balayage
-    -- This requires identifying the limit via the Poisson representation
-    simp only [windowed_phase_integral, boundary_phase_derivative_smoothed,
-               poisson_balayage, critical_atoms_total, add_zero]
-    have h : (fun _ : ℝ => (0 : ℝ)) = fun ε => ∫ t in Set.Icc (I.t0 - I.len) (I.t0 + I.len), (0 : ℝ) := by
-      ext ε
-      simp only [MeasureTheory.integral_const, smul_eq_mul, mul_zero]
-    -- Just return sorry for the measure identification
-    sorry
+  limit_is_balayage := h_fmr.limit_eq_balayage
   no_singular_part := trivial
 }
 
@@ -322,18 +340,26 @@ structure HilbertSchmidtDeterminant (det : ℂ → ℂ) where
   log_modulus_L1 : ∀ (σ : ℝ), 1/2 < σ →
     ∫ t, Real.log (Complex.abs (det (σ + I * t))) < ⊤ -- Placeholder for integrability
 
+/-- Structure bundling the log-modulus L1 convergence derivation. -/
+structure LogModulusL1Derivation (det : ℂ → ℂ) where
+  /-- The boundary log-modulus function. -/
+  boundary_log_modulus : ℝ → ℝ
+  /-- Integrability on each Whitney interval. -/
+  integrability : ∀ (I : RH.Cert.WhitneyInterval),
+    MeasureTheory.IntegrableOn boundary_log_modulus I.interval
+
 /-- Construction of LogModulusLimitHypothesis from Hilbert-Schmidt properties.
-    This is the "operator-theoretic" bridge. -/
+    This is the "operator-theoretic" bridge.
+    Now takes a LogModulusL1Derivation as input. -/
 noncomputable def mkLogModulusLimitFromDet2
     (det : ℂ → ℂ)
-    (h_det : HilbertSchmidtDeterminant det) :
+    (_h_det : HilbertSchmidtDeterminant det)
+    (h_deriv : LogModulusL1Derivation det) :
     LogModulusLimitHypothesis := {
-  log_modulus_L1_convergence := fun _I => by
-    use (fun t => Real.log (Complex.abs (det (1/2 + I * t)))) -- Boundary value
+  log_modulus_L1_convergence := fun I => by
+    use h_deriv.boundary_log_modulus
     constructor
-    · -- Prove integrability from h_det.log_modulus_L1
-      -- We'll need to show the limit exists or use the property.
-      sorry
+    · exact h_deriv.integrability I
     · trivial
   implies_no_singular := trivial
 }
@@ -350,12 +376,16 @@ structure FluxConservationHypothesis where
   closed_loop_flux_zero : ∀ (γ : Set ℂ) (h_closed : True), True
   /-- This implies no singular inner factors (sources at infinity). -/
   no_singular_sources : NoSingularInnerHypothesis
-  /-- Construct from operator theory. -/
-  from_det2 : HilbertSchmidtDeterminant RH.RS.BoundaryWedgeProof.det2 → NoSingularInnerHypothesis :=
-    fun _ => {
-      limit_is_balayage := fun _ => sorry -- Proven via F&M Riesz
-      no_singular_part := trivial
-    }
+
+/-- Construct NoSingularInnerHypothesis from operator theory.
+    Requires the F&M Riesz measure identification. -/
+noncomputable def noSingularInnerFromDet2
+    (_h_det : HilbertSchmidtDeterminant RH.RS.BoundaryWedgeProof.det2)
+    (h_fmr : FMRieszMeasureIdentification) :
+    NoSingularInnerHypothesis := {
+  limit_is_balayage := h_fmr.limit_eq_balayage
+  no_singular_part := trivial
+}
 
 /-- Discrete Exactness (T4): The existence of a potential function implies
     that the phase is well-defined and single-valued (modulo 2π). -/

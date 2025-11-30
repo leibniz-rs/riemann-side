@@ -58,14 +58,52 @@ open Real RH.RS.BoundaryWedgeProof RH.AnalyticNumberTheory.VKStandalone
 noncomputable def Upsilon_of_energy (E : ℝ) : ℝ :=
   Real.sqrt E / (Real.pi / 2)
 
-/-- The wedge condition is satisfied if Υ < 1/2. -/
-theorem wedge_from_energy_bound (E : ℝ) (hE : E ≤ (Real.pi / 4) ^ 2) :
+/-- If the total energy is strictly below $(\pi/4)^2$ (and nonnegative),
+then the wedge condition holds. -/
+theorem wedge_from_energy_bound (E : ℝ) (hE_nonneg : 0 ≤ E)
+    (hE_lt : E < (Real.pi / 4) ^ 2) :
     Upsilon_of_energy E < 1/2 := by
+  have hpi_pos : 0 < Real.pi / 2 := by
+    have := Real.pi_pos
+    nlinarith
+  have hsqrt_lt :
+      Real.sqrt E < Real.pi / 4 := by
+    have hpi_quarter_pos : 0 < Real.pi / 4 := by
+      have := Real.pi_pos
+      nlinarith
+    have :=
+      (Real.sqrt_lt_iff hE_nonneg
+            (sq_nonneg (Real.pi / 4))).mpr hE_lt
+    simpa [Real.sqrt_sq_eq_abs, abs_of_pos hpi_quarter_pos] using this
+  have htarget :
+      (Real.pi / 4) / (Real.pi / 2) = (1 / 2 : ℝ) := by
+    field_simp
+  have :
+      Real.sqrt E / (Real.pi / 2)
+        < (Real.pi / 4) / (Real.pi / 2) :=
+    div_lt_div_of_pos_right hsqrt_lt hpi_pos
+  simpa [Upsilon_of_energy, htarget] using this
+
+lemma Upsilon_of_energy_pi_half_sq (x : ℝ) :
+    Upsilon_of_energy ((Real.pi / 2 * x) ^ 2) = |x| := by
   unfold Upsilon_of_energy
-  -- This requires showing sqrt(E) / (π/2) < 1/2, i.e., sqrt(E) < π/4
-  -- From hE: E ≤ (π/4)², so sqrt(E) ≤ π/4
-  -- For strict inequality, we need E < (π/4)² or additional argument
-  sorry
+  have hpos : 0 < Real.pi / 2 := by
+    have := Real.pi_pos
+    nlinarith
+  have : Real.sqrt ((Real.pi / 2 * x) ^ 2)
+      = (Real.pi / 2) * |x| := by
+    have habs : |Real.pi / 2| = Real.pi / 2 :=
+      abs_of_pos hpos
+    simpa [pow_two, abs_mul, habs, mul_comm,
+      mul_left_comm, mul_assoc] using
+      (Real.sqrt_sq ((Real.pi / 2) * x))
+  simp [this, abs_mul, abs_of_pos hpos, div_mul_eq_mul_div,
+    mul_comm, mul_left_comm, mul_assoc]
+
+lemma Upsilon_of_energy_pi_half_sq_of_nonneg {x : ℝ}
+    (hx : 0 ≤ x) :
+    Upsilon_of_energy ((Real.pi / 2 * x) ^ 2) = x := by
+  simpa [abs_of_nonneg hx] using Upsilon_of_energy_pi_half_sq x
 
 /-! ## Master Hypothesis Structure -/
 
@@ -124,15 +162,21 @@ noncomputable def mkMasterHypothesis
   green_identity := gi
   lebesgue_diff := ld
   poisson_plateau := pp
-  E_total := RH.RS.BoundaryWedgeProof.VK_B_budget
-  hE_nonneg := by unfold RH.RS.BoundaryWedgeProof.VK_B_budget; norm_num
-  hE_bounded := le_refl _
-  Upsilon := Upsilon_of_energy RH.RS.BoundaryWedgeProof.VK_B_budget
-  hUpsilon_eq := rfl
-  hUpsilon_lt := by
-    -- Assuming VK_B_budget <= 0.16 (or whatever ensures < 1/2)
-    -- This is where the constant check happens
-    sorry
+  E_total := RH.RS.BoundaryWedgeProof.energy_paper
+  hE_nonneg := RH.RS.BoundaryWedgeProof.energy_paper_nonneg
+  hE_bounded := by
+    have h :=
+      RH.RS.BoundaryWedgeProof.energy_paper_le_two
+    simpa [RH.RS.BoundaryWedgeProof.VK_B_budget]
+      using h
+  Upsilon := RH.RS.BoundaryWedgeProof.Upsilon_paper
+  hUpsilon_eq := by
+    have hup_nonneg :
+        0 ≤ RH.RS.BoundaryWedgeProof.Upsilon_paper :=
+      le_of_lt RH.RS.BoundaryWedgeProof.upsilon_positive
+    simpa [RH.RS.BoundaryWedgeProof.energy_paper] using
+      (Upsilon_of_energy_pi_half_sq_of_nonneg hup_nonneg)
+  hUpsilon_lt := RH.RS.BoundaryWedgeProof.upsilon_less_than_half
 }
 
 /-! ## Main Theorem -/

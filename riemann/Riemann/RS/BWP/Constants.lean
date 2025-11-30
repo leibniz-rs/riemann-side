@@ -1,3 +1,4 @@
+import Mathlib.Data.Real.Pi.Bounds
 import Riemann.Mathlib.ArctanTwoGtOnePointOne
 import Riemann.RS.CRGreenOuter
 import Riemann.RS.WhitneyAeCore
@@ -327,6 +328,83 @@ This is standard arithmetic but requires careful setup in Lean.
 theorem upsilon_less_than_half : Upsilon_paper < 1/2 :=
   upsilon_paper_lt_half
 
+/-- Υ is positive (proven from positive constants) -/
+lemma upsilon_positive : 0 < Upsilon_paper := by
+  simp only [Upsilon_paper, M_psi_paper, c0_paper, C_box_paper, K0_paper, Kxi_paper, C_psi_H1]
+  -- All constants are positive
+  have h_pi_pos : 0 < Real.pi := Real.pi_pos
+  have h_c0_pos : 0 < c0_paper := c0_positive
+  have h_C_psi_pos : 0 < (0.24 : ℝ) := by norm_num
+  have h_K0_pos : 0 < (0.03486808 : ℝ) := by norm_num
+  have h_Kxi_pos : 0 < (0.16 : ℝ) := by norm_num
+  have h_Cbox_pos : 0 < K0_paper + Kxi_paper := by
+    simp only [K0_paper, Kxi_paper]
+    linarith [h_K0_pos, h_Kxi_pos]
+  have h_sqrt_pos : 0 < Real.sqrt (K0_paper + Kxi_paper) := Real.sqrt_pos.mpr h_Cbox_pos
+  -- M_psi = (4/pi)·C_psi·√C_box > 0
+  have h_M_pos : 0 < (4 / Real.pi) * C_psi_H1 * Real.sqrt (K0_paper + Kxi_paper) := by
+    apply mul_pos
+    · apply mul_pos
+      · apply div_pos; linarith; exact h_pi_pos
+      · simp only [C_psi_H1]; exact h_C_psi_pos
+    · exact h_sqrt_pos
+  -- Υ = (2/pi)·M_psi/c0 > 0
+  apply div_pos
+  apply mul_pos
+  · apply div_pos; linarith; exact h_pi_pos
+  · exact h_M_pos
+  · exact h_c0_pos
+
+/-- Energy constant appearing in the wedge reduction: $E = ((\pi/2)\,\Upsilon)^2$. -/
+noncomputable def energy_paper : ℝ :=
+  ((Real.pi / 2) * Upsilon_paper) ^ 2
+
+lemma energy_paper_nonneg : 0 ≤ energy_paper := by
+  unfold energy_paper
+  exact sq_nonneg _
+
+lemma upsilon_le_half : Upsilon_paper ≤ 1 / 2 :=
+  le_of_lt upsilon_less_than_half
+
+lemma energy_paper_le_pi_div_four_sq : energy_paper ≤ (Real.pi / 4) ^ 2 := by
+  unfold energy_paper
+  have hU_nonneg : 0 ≤ Upsilon_paper := le_of_lt upsilon_positive
+  have hSq_le :
+      Upsilon_paper ^ 2 ≤ (1 / 2 : ℝ) ^ 2 := by
+    apply sq_le_sq'
+    · linarith [upsilon_positive]
+    · exact upsilon_le_half
+  have hScale_nonneg : 0 ≤ (Real.pi / 2) ^ 2 := sq_nonneg _
+  have hMul :=
+    mul_le_mul_of_nonneg_left hSq_le hScale_nonneg
+  have h_left :
+      ((Real.pi / 2) * Upsilon_paper) ^ 2 =
+        (Real.pi / 2) ^ 2 * Upsilon_paper ^ 2 := by
+    ring
+  have h_right :
+      (Real.pi / 4) ^ 2 =
+        (Real.pi / 2) ^ 2 * (1 / 2 : ℝ) ^ 2 := by
+    ring
+  rw [h_left, h_right]
+  exact hMul
+
+lemma pi_div_four_sq_le_two : (Real.pi / 4) ^ 2 ≤ 2 := by
+  -- π < 4, so (π/4)² < 1 < 2
+  have hpi_lt_four : Real.pi < 4 := Real.pi_lt_four
+  have hpi_nonneg : 0 ≤ Real.pi := le_of_lt Real.pi_pos
+  have hpi_div_four_lt_one : Real.pi / 4 < 1 := by
+    rw [div_lt_one (by norm_num : (0 : ℝ) < 4)]
+    exact hpi_lt_four
+  have hpi_div_four_nonneg : 0 ≤ Real.pi / 4 := by positivity
+  have hsq_lt_one : (Real.pi / 4) ^ 2 < 1 := by
+    rw [sq_lt_one_iff_abs_lt_one]
+    rw [abs_of_nonneg hpi_div_four_nonneg]
+    exact hpi_div_four_lt_one
+  linarith
+
+lemma energy_paper_le_two : energy_paper ≤ 2 :=
+  le_trans energy_paper_le_pi_div_four_sq pi_div_four_sq_le_two
+
 /-! Relate `Upsilon_of Kxi_paper` to `Upsilon_paper` and show the parameterized
 ratio identity used in the closure test. -/
 
@@ -459,32 +537,5 @@ theorem upsilon_param_lt_half_of_Kxi_lt_max
   have := Upsilon_of_eq_ratio Kxi
   simp [this]; exact (div_lt_iff₀' h_den_pos).mpr hmain_lt
 
-
-/-- Υ is positive (proven from positive constants) -/
-lemma upsilon_positive : 0 < Upsilon_paper := by
-  simp only [Upsilon_paper, M_psi_paper, c0_paper, C_box_paper, K0_paper, Kxi_paper, C_psi_H1]
-  -- All constants are positive
-  have h_pi_pos : 0 < Real.pi := Real.pi_pos
-  have h_c0_pos : 0 < c0_paper := c0_positive
-  have h_C_psi_pos : 0 < (0.24 : ℝ) := by norm_num
-  have h_K0_pos : 0 < (0.03486808 : ℝ) := by norm_num
-  have h_Kxi_pos : 0 < (0.16 : ℝ) := by norm_num
-  have h_Cbox_pos : 0 < K0_paper + Kxi_paper := by
-    simp only [K0_paper, Kxi_paper]
-    linarith [h_K0_pos, h_Kxi_pos]
-  have h_sqrt_pos : 0 < Real.sqrt (K0_paper + Kxi_paper) := Real.sqrt_pos.mpr h_Cbox_pos
-  -- M_psi = (4/pi)·C_psi·√C_box > 0
-  have h_M_pos : 0 < (4 / Real.pi) * C_psi_H1 * Real.sqrt (K0_paper + Kxi_paper) := by
-    apply mul_pos
-    · apply mul_pos
-      · apply div_pos; linarith; exact h_pi_pos
-      · simp only [C_psi_H1]; exact h_C_psi_pos
-    · exact h_sqrt_pos
-  -- Υ = (2/pi)·M_psi/c0 > 0
-  apply div_pos
-  apply mul_pos
-  · apply div_pos; linarith; exact h_pi_pos
-  · exact h_M_pos
-  · exact h_c0_pos
 
 end RH.RS.BoundaryWedgeProof

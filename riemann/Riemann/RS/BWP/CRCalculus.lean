@@ -346,8 +346,7 @@ theorem cr_green_identity_on_tent
   obtain ⟨C, hC, h_forall⟩ := hyp.identity_with_bound
   specialize h_forall w φ a b height hab h_height h_admissible
   obtain ⟨bulk_integral, boundary_terms, h_eq, h_bound⟩ := h_forall
-  use bulk_integral, boundary_terms, C
-  exact ⟨hC, h_eq, h_bound⟩
+  exact ⟨bulk_integral, boundary_terms, C, hC, h_eq, h_bound⟩
 
 /-- Dirichlet energy bound for the test function V_φ on the tent.
     ||∇(χV_φ)||_2 ≤ C * sqrt(|I|)
@@ -445,43 +444,66 @@ theorem outer_cancellation_invariance
     (h_int_bdry_zero : IntegrableOn (fun t => φ t * (-deriv w_zero t)) I)
     (h_int_bdry_out : IntegrableOn (fun t => φ t * (-deriv w_out t)) I)
     -- Derivative linearity
-    (h_w_diff : ∀ t ∈ I, DifferentiableAt ℝ w_zero t ∧ DifferentiableAt ℝ w_out t) :
+    (h_w_diff : ∀ t ∈ I, DifferentiableAt ℝ w_zero t ∧ DifferentiableAt ℝ w_out t)
+    -- Measurability hypotheses (needed for set integrals)
+    (hQ_meas : MeasurableSet Q)
+    (hI_meas : MeasurableSet I)
+    -- Derivative splitting (globally, not just on I)
+    (h_deriv_split : ∀ t, deriv w_tot t = deriv w_zero t + deriv w_out t)
+    -- Total integrability
+    (h_int_grad_tot : IntegrableOn (fun z => (grad_tot z).re * (grad_test z).re + (grad_tot z).im * (grad_test z).im) Q)
+    (h_int_bdry_tot : IntegrableOn (fun t => φ t * (-deriv w_tot t)) I) :
     let pairing (g : ℂ → ℂ) := ∫ z in Q, (g z).re * (grad_test z).re + (g z).im * (grad_test z).im
     let boundary (w : ℝ → ℝ) := ∫ t in I, φ t * (-deriv w t)
     (pairing grad_tot - boundary w_tot) =
     (pairing grad_zero - boundary w_zero) + (pairing grad_out - boundary w_out) := by
   -- Define shorthands
-  let pairing (g : ℂ → ℂ) := ∫ z in Q, (g z).re * (grad_test z).re + (g z).im * (grad_test z).im
-  let boundary (w : ℝ → ℝ) := ∫ t in I, φ t * (-deriv w t)
+  set p_tot := ∫ z in Q, (grad_tot z).re * (grad_test z).re + (grad_tot z).im * (grad_test z).im with hp_tot
+  set p_zero := ∫ z in Q, (grad_zero z).re * (grad_test z).re + (grad_zero z).im * (grad_test z).im with hp_zero
+  set p_out := ∫ z in Q, (grad_out z).re * (grad_test z).re + (grad_out z).im * (grad_test z).im with hp_out
+  set b_tot := ∫ t in I, φ t * (-deriv w_tot t) with hb_tot
+  set b_zero := ∫ t in I, φ t * (-deriv w_zero t) with hb_zero
+  set b_out := ∫ t in I, φ t * (-deriv w_out t) with hb_out
 
-  -- Prove pairing splitting
-  have h_pairing_split : pairing grad_tot = pairing grad_zero + pairing grad_out := by
-    rw [integral_add h_int_grad_zero h_int_grad_out]
-    apply integral_congr_ae
-    apply Eventually.of_forall
-    intro z
-    by_cases hz : z ∈ Q
-    · specialize hU_split z hz
-      simp [hU_split]
+  -- Step 1: Show p_tot = p_zero + p_out
+  have hp_split : p_tot = p_zero + p_out := by
+    -- The integrand of p_tot equals the sum of integrands of p_zero and p_out on Q
+    have integrand_eq : ∀ z ∈ Q,
+        (grad_tot z).re * (grad_test z).re + (grad_tot z).im * (grad_test z).im =
+        ((grad_zero z).re * (grad_test z).re + (grad_zero z).im * (grad_test z).im) +
+        ((grad_out z).re * (grad_test z).re + (grad_out z).im * (grad_test z).im) := by
+      intro z hz
+      rw [hU_split z hz]
+      simp only [Complex.add_re, Complex.add_im]
       ring
-    · simp
+    -- Use integral linearity: ∫(f+g) = ∫f + ∫g
+    calc p_tot = ∫ z in Q, (grad_tot z).re * (grad_test z).re + (grad_tot z).im * (grad_test z).im := rfl
+      _ = ∫ z in Q, ((grad_zero z).re * (grad_test z).re + (grad_zero z).im * (grad_test z).im) +
+                    ((grad_out z).re * (grad_test z).re + (grad_out z).im * (grad_test z).im) := by
+        apply MeasureTheory.setIntegral_congr_fun hQ_meas
+        exact fun z hz => integrand_eq z hz
+      _ = p_zero + p_out := by
+        rw [integral_add h_int_grad_zero h_int_grad_out]
 
-  -- Prove boundary splitting
-  have h_boundary_split : boundary w_tot = boundary w_zero + boundary w_out := by
-    rw [integral_add h_int_bdry_zero h_int_bdry_out]
-    apply integral_congr_ae
-    apply Eventually.of_forall
-    intro t
-    by_cases ht : t ∈ I
-    · specialize hw_split t ht
-      specialize h_w_diff t ht
-      rw [deriv_add h_w_diff.1 h_w_diff.2]
-      simp [hw_split]
+  -- Step 2: Show b_tot = b_zero + b_out
+  have hb_split : b_tot = b_zero + b_out := by
+    -- The integrand of b_tot equals the sum using deriv splitting
+    have integrand_eq : ∀ t,
+        φ t * (-deriv w_tot t) = (φ t * (-deriv w_zero t)) + (φ t * (-deriv w_out t)) := by
+      intro t
+      rw [h_deriv_split t]
       ring
-    · simp
+    calc b_tot = ∫ t in I, φ t * (-deriv w_tot t) := rfl
+      _ = ∫ t in I, (φ t * (-deriv w_zero t)) + (φ t * (-deriv w_out t)) := by
+        apply MeasureTheory.setIntegral_congr_fun hI_meas
+        exact fun t _ => integrand_eq t
+      _ = b_zero + b_out := by
+        rw [integral_add h_int_bdry_zero h_int_bdry_out]
 
-  -- Combine
-  rw [h_pairing_split, h_boundary_split]
+  -- Step 3: Combine to get the result
+  -- Unfold the set definitions and use the splitting lemmas
+  simp only [hp_tot, hp_zero, hp_out, hb_tot, hb_zero, hb_out] at hp_split hb_split ⊢
+  rw [hp_split, hb_split]
   ring
 
 end Riemann.RS.BoundaryWedgeProof

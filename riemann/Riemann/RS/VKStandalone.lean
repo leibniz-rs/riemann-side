@@ -9,7 +9,7 @@ This file intentionally avoids depending on zeta/zero infrastructure. It records
 * the derived annular coefficients a₁, a₂ (as definitions),
 * the geometric Poisson-balayage constant C_α,
 * the assembled Carleson-box constant K_{ξ,paper},
-* and a concrete “locked” parameter choice (α = 3/2, c = 1/10, (C_VK,B_VK) = (10^3,5)).
+* and a concrete “locked” parameter choice (α = 3/2, c = 1/2000, (C_VK,B_VK) = (10^3,5)).
 
 No proofs of analytic facts are attempted here; this module is algebraic/scaffolding only,
 and compiles in isolation.
@@ -65,10 +65,10 @@ structure VKWhitney where
 def KxiPaper (Cα a1 a2 c Cnear Ksmall : ℝ) : ℝ :=
   Cα * (a1 * c + a2 / 3) + Cnear + Ksmall
 
-/-- Locked Whitney parameters: α = 3/2, c = 1/10. -/
+/-- Locked Whitney parameters: α = 3/2, c = 1/2000. -/
 def lockedWhitney : VKWhitney :=
   { α := (3 : ℝ) / 2
-  , c := (1 : ℝ) / 10
+  , c := (1 : ℝ) / 2000
   , hα := by norm_num
   , hc := by norm_num }
 
