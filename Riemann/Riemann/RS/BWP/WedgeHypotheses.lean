@@ -86,7 +86,7 @@ theorem lebesgue_differentiation_bound
   by_cases hε : 0 ≤ ε
   · -- Case ε ≥ 0: use Lebesgue differentiation
     -- The Besicovitch Vitali family for ℝ
-    have vitali := Besicovitch.vitaliFamily (μ := volume (α := ℝ))
+    let vitali := Besicovitch.vitaliFamily (μ := volume (α := ℝ))
 
     -- By Lebesgue differentiation, for a.e. t, averages converge to f(t)
     have h_ae := vitali.ae_tendsto_average h_int
@@ -108,54 +108,110 @@ theorem lebesgue_differentiation_bound
     -- We use abs_le to split into f(t) ≤ ε and -ε ≤ f(t)
     rw [abs_le]
 
-    -- For the Besicovitch Vitali family on ℝ, setsAt t = {closedBall t r | r > 0}
+    -- The Vitali filter at t is NeBot
+    haveI : (vitali.filterAt t).NeBot := VitaliFamily.filterAt_neBot vitali t
+
+    -- We need to show the average is eventually bounded by ε
+    -- For the Besicovitch family, setsAt t = {closedBall t r | r > 0}
     -- Each closedBall t r = Icc (t-r) (t+r) by Real.closedBall_eq_Icc
-    -- This is exactly a Whitney interval with center t and len r
 
-    -- For any such interval I with len r:
-    -- - By h_bound: |∫_I f| ≤ ε * r
-    -- - Measure of I = 2r
-    -- - Average = (∫_I f) / (2r)
-    -- - |Average| ≤ (ε * r) / (2r) = ε/2
+    -- Key bound: for any set a in the Vitali filter at t,
+    -- the average |⨍ y in a, f y| is bounded by ε (not just ε/2, for simplicity)
 
-    -- Since ε/2 ≤ ε, the average is in [-ε, ε]
-    -- By le_of_tendsto and ge_of_tendsto, f(t) ∈ [-ε, ε]
+    -- We show: ∀ᶠ a in vitali.filterAt t, ⨍ y in a, f y ≤ ε
+    -- and:     ∀ᶠ a in vitali.filterAt t, -ε ≤ ⨍ y in a, f y
 
-    -- The key is to show the bound holds eventually in the Vitali filter.
-    -- For the Besicovitch family, setsAt t consists only of closed balls,
-    -- so we just need to check the bound for closed balls.
+    -- Then by le_of_tendsto and ge_of_tendsto with ht, we get f(t) ∈ [-ε, ε]
 
-    -- For any closed ball B = closedBall t r with r > 0:
-    -- B = Icc (t-r) (t+r) is a Whitney interval with center t and len r
-    -- The bound h_bound gives |∫_B f| ≤ ε * r
-    -- The measure is 2r, so |average| ≤ ε/2
+    -- Helper: for any closed ball centered at t with radius r > 0,
+    -- the average is bounded by ε
+    have avg_bound : ∀ r : ℝ, 0 < r → |⨍ y in Metric.closedBall t r, f y| ≤ ε := by
+      intro r hr
+      -- closedBall t r = Icc (t-r) (t+r) by Real.closedBall_eq_Icc
+      have ball_eq : Metric.closedBall t r = Icc (t - r) (t + r) := Real.closedBall_eq_Icc
+      -- This is a Whitney interval with center t and len r
+      let I : RH.Cert.WhitneyInterval := ⟨t, r, hr⟩
+      -- The interval of I is exactly the closed ball
+      have I_interval : I.interval = Icc (t - r) (t + r) := rfl
+      -- By h_bound, |∫ f| ≤ ε * r
+      have int_bound : |∫ y in I.interval, f y| ≤ ε * r := h_bound I
+      -- Rewrite in terms of the closed ball
+      rw [I_interval] at int_bound
+      -- The measure of the closed ball is 2r
+      have meas_ball : volume (Metric.closedBall t r) = ENNReal.ofReal (2 * r) := by
+        rw [ball_eq, Real.volume_Icc]
+        congr 1
+        ring
+      -- The measure is positive and finite
+      have meas_pos : 0 < volume (Metric.closedBall t r) := by
+        rw [meas_ball]
+        exact ENNReal.ofReal_pos.mpr (by linarith)
+      have meas_ne_top : volume (Metric.closedBall t r) ≠ ⊤ := by
+        rw [meas_ball]
+        exact ENNReal.ofReal_ne_top
+      -- The average is (∫ f) / (2r)
+      -- |average| = |∫ f| / (2r) ≤ (ε * r) / (2r) = ε/2 ≤ ε
 
-    -- The remaining issue is that we need the bound on the average ⨍,
-    -- not just on the integral. The average is defined as (∫ f) / (measure B).
+      -- Rewrite the closed ball to Icc everywhere
+      rw [ball_eq]
+      -- Use setAverage_eq to express the average
+      rw [setAverage_eq]
+      -- The measure in real is 2r
+      have meas_real : (volume : Measure ℝ).real (Icc (t - r) (t + r)) = 2 * r := by
+        rw [measureReal_def, Real.volume_Icc, ENNReal.toReal_ofReal (by linarith : 0 ≤ (t + r) - (t - r))]
+        ring
+      rw [meas_real]
+      -- Now we need to bound |(2r)⁻¹ • ∫ f| = |(2r)⁻¹ * ∫ f|
+      -- For reals, a • x = a * x
+      simp only [smul_eq_mul]
+      -- |(2r)⁻¹ * ∫ f| = |(2r)⁻¹| * |∫ f| = (2r)⁻¹ * |∫ f|
+      have hr2 : 0 < 2 * r := by linarith
+      rw [abs_mul, abs_of_pos (inv_pos.mpr hr2)]
+      calc (2 * r)⁻¹ * |∫ y in Icc (t - r) (t + r), f y|
+          ≤ (2 * r)⁻¹ * (ε * r) := by
+            apply mul_le_mul_of_nonneg_left
+            · exact int_bound
+            · exact le_of_lt (inv_pos.mpr hr2)
+        _ = ε / 2 := by field_simp
+        _ ≤ ε := by linarith
 
-    -- For B = closedBall t r = Icc (t-r) (t+r):
-    -- measure B = 2r
-    -- ⨍_B f = (∫_B f) / (2r)
-    -- |⨍_B f| = |∫_B f| / (2r) ≤ (ε * r) / (2r) = ε/2
+    -- The key step: show that the average bound holds eventually in the Vitali filter.
+    -- For Besicovitch, setsAt t = (fun r => closedBall t r) '' Ioi 0
+    -- So every set in setsAt t is a closed ball, and avg_bound applies.
 
-    -- So the average is bounded by ε/2 for all sets in setsAt t.
-    -- By eventually_filterAt_iff, this means ∀ᶠ a in filterAt t, |⨍_a f| ≤ ε/2.
+    -- The average bound implies: ∀ᶠ a in vitali.filterAt t, ⨍ y in a, f y ∈ [-ε, ε]
+    have avg_eventually_bounded : ∀ᶠ a in vitali.filterAt t, |⨍ y in a, f y| ≤ ε := by
+      apply Filter.Eventually.mono (vitali.eventually_filterAt_mem_setsAt t)
+      intro a ha
+      -- ha : a ∈ vitali.setsAt t
+      -- For Besicovitch, setsAt t = (fun r => closedBall t r) '' Ioi 0
+      -- So a = closedBall t r for some r > 0
+      -- We need to extract r from ha
+      -- The key is that vitali.setsAt t = (Besicovitch.vitaliFamily volume).setsAt t
+      --                                = (fun r => closedBall t r) '' Ioi 0
+      -- Since vitali = Besicovitch.vitaliFamily volume, this is definitionally true
+      have setsAt_def : vitali.setsAt t = (fun r : ℝ => Metric.closedBall t r) '' Ioi (0 : ℝ) := by
+        simp only [vitali]
+        rfl
+      rw [setsAt_def, mem_image] at ha
+      obtain ⟨r, hr_pos, hr_eq⟩ := ha
+      rw [mem_Ioi] at hr_pos
+      rw [← hr_eq]
+      exact avg_bound r hr_pos
 
-    -- Then by le_of_tendsto: since average → f(t) and average ≤ ε/2, we have f(t) ≤ ε/2 ≤ ε
-    -- And by ge_of_tendsto: since average → f(t) and average ≥ -ε/2, we have f(t) ≥ -ε/2 ≥ -ε
-
-    -- The formal proof requires:
-    -- 1. Constructing the Whitney interval from the closed ball
-    -- 2. Computing the measure of the closed ball
-    -- 3. Applying h_bound to get the integral bound
-    -- 4. Dividing to get the average bound
-    -- 5. Using eventually_filterAt_iff to get the filter bound
-    -- 6. Applying le_of_tendsto and ge_of_tendsto
-
-    -- This is routine measure theory but requires careful type management.
-    -- The mathematical content is complete.
-
-    constructor <;> sorry
+    constructor
+    · -- Show -ε ≤ f(t)
+      apply ge_of_tendsto ht
+      apply Filter.Eventually.mono avg_eventually_bounded
+      intro a ha
+      -- |average| ≤ ε implies average ≥ -ε
+      linarith [abs_le.mp ha]
+    · -- Show f(t) ≤ ε
+      apply le_of_tendsto ht
+      apply Filter.Eventually.mono avg_eventually_bounded
+      intro a ha
+      -- |average| ≤ ε implies average ≤ ε
+      linarith [abs_le.mp ha]
 
   · -- Case ε < 0: derive contradiction from h_bound
     push_neg at hε

@@ -783,9 +783,28 @@ lemma zeroSetXi_inter_compact_finite' {K : Set ℂ} (hK : IsCompact K) :
   -- Discreteness: for each z with `riemannXi_ext z = 0`, analyticity implies an isolated zero (unless identically zero).
   -- Since `riemannXi_ext 2 ≠ 0`, it is not identically zero on any open set; hence zeros are isolated globally.
   have hNotIdent : riemannXi_ext 2 ≠ 0 := by
-    -- classical fact: ζ(2) ≠ 0 ⇒ Λ(2) ≠ 0; in mathlib this is standard
-    -- Replace with a direct reference available in your version.
-    admit
+    -- riemannXi_ext = completedRiemannZeta
+    -- riemannZeta 2 = completedRiemannZeta 2 / Gammaℝ 2
+    -- riemannZeta 2 = π²/6 ≠ 0, and Gammaℝ 2 ≠ 0
+    -- Therefore completedRiemannZeta 2 ≠ 0
+    simp only [RH.AcademicFramework.CompletedXi.riemannXi_ext]
+    intro h
+    -- From riemannZeta_def_of_ne_zero: riemannZeta 2 = completedRiemannZeta 2 / Gammaℝ 2
+    have h2ne0 : (2 : ℂ) ≠ 0 := by norm_num
+    have hzeta_eq := riemannZeta_def_of_ne_zero h2ne0
+    -- riemannZeta 2 = π²/6 ≠ 0
+    have hzeta_two := riemannZeta_two
+    rw [h, zero_div] at hzeta_eq
+    rw [hzeta_eq] at hzeta_two
+    -- 0 = π²/6, contradiction since π²/6 ≠ 0
+    have hpi_sq_pos : (0 : ℂ) < (π : ℂ)^2 / 6 := by
+      rw [div_pos_iff]
+      left
+      constructor
+      · apply sq_pos_of_pos
+        exact_mod_cast Real.pi_pos
+      · norm_num
+    linarith [hpi_sq_pos.ne']
   have hDiscr : DiscreteTopology zeroSetXi := by
     -- Use `AnalyticAt.eventually_eq_zero_or_eventually_ne_zero` at each zero
     -- and `AnalyticOnNhd.eqOn_of_preconnected_of_frequently_eq` to exclude the "identically zero" branch.
