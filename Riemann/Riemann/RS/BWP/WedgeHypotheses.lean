@@ -218,7 +218,7 @@ theorem lebesgue_differentiation_bound
     exfalso
     -- Any Whitney interval I with len > 0 gives ε * len < 0
     -- But |∫ f| ≥ 0, so h_bound is impossible
-    let I : RH.Cert.WhitneyInterval := ⟨0, 1, by norm_num⟩
+    let I : RH.Cert.WhitneyInterval := ⟨1, 1, by norm_num⟩
     have h := h_bound I
     have h_abs_nonneg : 0 ≤ |∫ t in I.interval, f t| := abs_nonneg _
     have h_eps_neg : ε * I.len < 0 := by simp only [I]; linarith

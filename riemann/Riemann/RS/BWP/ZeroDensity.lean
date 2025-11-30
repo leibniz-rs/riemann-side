@@ -49,9 +49,9 @@ def Zk_card_from_hyp (N : ℝ → ℝ → ℝ) (hyp : VKZeroDensityHypothesis N)
     (I : RH.Cert.WhitneyInterval) (k : ℕ) : ℝ :=
   hyp.C_VK * ((2 : ℝ)^k * I.len) * (Real.log I.t0) ^ hyp.B_VK
 
-/-- The annular count bound is always non-negative (uses built-in t0 ≥ 1). -/
+/-- The annular count bound is always non-negative when t0 ≥ 1. -/
 lemma Zk_card_from_hyp_nonneg (N : ℝ → ℝ → ℝ) (hyp : VKZeroDensityHypothesis N)
-    (I : RH.Cert.WhitneyInterval) (k : ℕ) :
+    (I : RH.Cert.WhitneyInterval) (k : ℕ) (ht0 : 1 ≤ I.t0) :
     0 ≤ Zk_card_from_hyp N hyp I k := by
   unfold Zk_card_from_hyp
   apply mul_nonneg
@@ -62,7 +62,7 @@ lemma Zk_card_from_hyp_nonneg (N : ℝ → ℝ → ℝ) (hyp : VKZeroDensityHypo
   exact le_of_lt I.len_pos
   apply Real.rpow_nonneg
   apply Real.log_nonneg
-  exact I.t0_ge_one
+  exact ht0
 
 /-- The Prime Sieve Factor P from Recognition Science.
     This is the geometric bound on weighted zero counts derived from
@@ -85,13 +85,9 @@ structure VKWeightedSumHypothesis (N : ℝ → ℝ → ℝ) (hyp : VKZeroDensity
   prime_sieve_consistent : RH.RS.BoundaryWedgeProof.VK_B_budget ≤ prime_sieve_factor
 
 /-- Structure bundling the t0 ≥ 1 assumption for all Whitney intervals.
-    This is now trivially satisfied since WhitneyInterval has t0_ge_one built-in. -/
+    This must be provided as a hypothesis for VK bounds. -/
 structure WhitneyIntervalAssumptions where
   t0_ge_one : ∀ I : RH.Cert.WhitneyInterval, 1 ≤ I.t0
-
-/-- The canonical instance of WhitneyIntervalAssumptions, using the built-in constraint. -/
-def whitneyIntervalAssumptions : WhitneyIntervalAssumptions where
-  t0_ge_one := fun I => I.t0_ge_one
 
 /-- Structure bundling the prime sieve consistency assumption. -/
 structure PrimeSieveConsistency where
@@ -164,7 +160,7 @@ theorem realVKWeightedSumHypothesis (N : ℝ → ℝ → ℝ) (hyp : VKZeroDensi
     have h_geom : (Finset.range (Nat.succ K)).sum (fun k => (1/2 : ℝ)^k) ≤ 2 :=
       sum_geometric_two_le (Nat.succ K)
 
-    -- The coefficient is nonneg (uses built-in t0_ge_one from WhitneyInterval)
+    -- The coefficient is nonneg (uses t0_ge_one from WhitneyIntervalAssumptions)
     have h_coef_nonneg : 0 ≤ hyp.C_VK * I.len * (Real.log I.t0) ^ hyp.B_VK := by
       apply mul_nonneg
       apply mul_nonneg
@@ -172,7 +168,7 @@ theorem realVKWeightedSumHypothesis (N : ℝ → ℝ → ℝ) (hyp : VKZeroDensi
       exact le_of_lt I.len_pos
       apply Real.rpow_nonneg
       apply Real.log_nonneg
-      exact I.t0_ge_one
+      exact h_whitney.t0_ge_one I
 
     calc hyp.C_VK * I.len * (Real.log I.t0) ^ hyp.B_VK *
           (Finset.range (Nat.succ K)).sum (fun k => (1/2 : ℝ)^k)

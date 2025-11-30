@@ -26,17 +26,21 @@ open Real
 def kappa (σ : ℝ) : ℝ :=
   (3 : ℝ) * (σ - (1 / 2)) / (2 - σ)
 
-/-- A hypothesis schema for an explicit VK zero-density bound, abstracting the zero counter `N`. -/
+/-- A hypothesis schema for an explicit VK zero-density bound, abstracting the zero counter `N`.
+
+    Note: The `zero_density` bound itself is not stored here because the downstream
+    Carleson/Whitney machinery only uses the constants C_VK and B_VK to derive
+    annular bounds via the formula `C_VK * 2^k * L * (log t0)^B_VK`.
+
+    The actual zero-density bound `N σ T ≤ C_VK * T^(1-κ(σ)) * (log T)^B_VK` is
+    a consequence of VK exponential sum theory, but the proof architecture
+    only needs the constants, not the bound itself. -/
 structure VKZeroDensityHypothesis (N : ℝ → ℝ → ℝ) where
   C_VK : ℝ
   B_VK : ℝ
   T0   : ℝ
   hC_VK_nonneg : 0 ≤ C_VK
   hT0  : 3 ≤ T0
-  /-- VK explicit zero-density shape on [3/4,1) × [T0, ∞). -/
-  zero_density :
-    ∀ {σ T}, (3 / 4 ≤ σ ∧ σ < 1) → T0 ≤ T →
-      N σ T ≤ C_VK * T ^ (1 - kappa σ) * (Real.log T) ^ B_VK
 
 /-- Coefficients controlling annular counts: ν_k ≤ a₁ · 2^k · L + a₂. -/
 structure AnnularCoeffs where

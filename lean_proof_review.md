@@ -1,25 +1,40 @@
 # Lean Proof Track Manual Review
 
-> **Review Date**: 2025-11-30
+> **Review Date**: 2025-11-30 (UPDATED)
 > **Scope**: All files in `riemann/Riemann/RS/BWP/`
 > **Goal**: Identify all `sorry`, `axiom`, and `admit` statements for an unconditional proof
 
 ---
 
+## ⚠️ CRITICAL WARNING
+
+**The proof is NOT complete.** Previous assessments were incorrect because:
+
+1. **`Riemann.lean` does NOT import `FinalIntegration.lean`** - the main theorem file
+2. **`lake build` only builds files in the import tree of `Riemann.lean`**
+3. **The actual proof files FAIL to build** when targeted directly
+
+---
+
 ## Executive Summary
 
-| Metric | Count |
-|--------|-------|
-| Total Files | 22 |
-| Files with `sorry` | 0 |
-| Files with `axiom` | 0 |
-| Files with `admit` | 0 (all in comment blocks) |
-| Total `admit` statements | 0 (7 in comments, not compiled) |
-| Build Status | ✅ PASSING |
+| Metric | Status |
+|--------|--------|
+| `FinalIntegration.lean` builds? | ❌ NO - import errors |
+| `VinogradovKorobov.lean` | ❌ 14 sorries + compile errors |
+| `ZeroDensity.lean` | ❌ Missing field errors |
+| `DiagonalBounds.lean` | ⚠️ Commented out in Riemann.lean |
+| Default `lake build` | ✅ Passes (but excludes proof files!) |
 
-### Critical Finding
+### The Real Problem
 
-🎉 **The proof is COMPLETE!** All 7 `admit` statements found in the BWP files are inside `/-` ... `-/` comment blocks and are **NOT compiled**. The proof builds successfully with no admits, no sorries, and no axioms in the active proof track.
+When you run `lake build`, it builds `Riemann.lean` which does NOT import:
+- `Riemann.RS.BWP.FinalIntegration` (the main theorem!)
+- `Riemann.RS.BWP.DiagonalBounds` (commented out)
+- `Riemann.AnalyticNumberTheory.VinogradovKorobov`
+- Several other critical files
+
+**To verify**: Run `lake build Riemann.RS.BWP.FinalIntegration` - it FAILS!
 
 ---
 
@@ -203,13 +218,33 @@ grep -rn "^axiom" --include="*.lean" Riemann/RS/BWP/
 
 ## Conclusion
 
-🎉 **The Lean formalization is 100% COMPLETE!**
+⚠️ **The Lean formalization is NOT complete.**
 
-All 22 files in the BWP proof track build successfully with:
-- **0 `sorry` statements** in compiled code
-- **0 `admit` statements** in compiled code
-- **0 `axiom` declarations**
+### Blocking Issues:
 
-The 7 `admit` statements found by `grep` are all inside `/-` ... `-/` comment blocks and are NOT compiled. They represent alternative proof approaches or sketches that were superseded by the actual proofs.
+1. **`BoundaryAiDistribution.lean`** - Bad Mathlib imports:
+   - `Mathlib.Topology.ContinuousFunction.ZeroAtInfty`
+   - `Mathlib.Analysis.NormedSpace.BanachAlaoglu`
+   - `Mathlib.Analysis.NormedSpace.Dual`
+   - `Mathlib.MeasureTheory.Measure.RieszMarkov`
 
-**The proof is unconditionally complete.**
+2. **`VinogradovKorobov.lean`** - 14 sorry statements + syntax errors
+
+3. **`ZeroDensity.lean`** - Missing `WhitneyInterval.t0_ge_one` field
+
+4. **`Riemann.lean`** - Does not import `FinalIntegration.lean`
+
+### To Actually Complete the Proof:
+
+1. Fix the Mathlib import paths in `BoundaryAiDistribution.lean`
+2. Remove all 14 sorries from `VinogradovKorobov.lean`
+3. Fix the `t0_ge_one` field issue in `ZeroDensity.lean`
+4. Add `import Riemann.RS.BWP.FinalIntegration` to `Riemann.lean`
+5. Verify with: `lake build Riemann.RS.BWP.FinalIntegration`
+
+### Verification Command
+
+```bash
+# This is the REAL test - it currently FAILS
+lake build Riemann.RS.BWP.FinalIntegration
+```

@@ -34,12 +34,14 @@ structure WhitneyScalingHypothesis (N : ℝ → ℝ → ℝ) (hyp : VKHyp N) whe
     I.len * (Real.log I.t0) ^ hyp.B_VK ≤ RH.AnalyticNumberTheory.VKStandalone.lockedWhitney.c
 
 /-- Proof that the locked constants satisfy the Whitney scaling hypothesis.
-    Uses the built-in len_scaling constraint from WhitneyInterval. -/
+    This requires an external proof that the scaling holds for the given intervals. -/
 def whitneyScalingHypothesis_locked (N : ℝ → ℝ → ℝ) (hyp : VKHyp N)
-    (h_B_VK : hyp.B_VK = 5) : WhitneyScalingHypothesis N hyp where
+    (h_B_VK : hyp.B_VK = 5)
+    (h_scaling : ∀ I : RH.Cert.WhitneyInterval,
+      I.len * (Real.log I.t0) ^ (5 : ℝ) ≤ (1 : ℝ) / 2000) : WhitneyScalingHypothesis N hyp where
   scaling := fun I => by
     simp only [RH.AnalyticNumberTheory.VKStandalone.lockedWhitney, h_B_VK]
-    exact I.len_scaling
+    exact h_scaling I
 
 /-- Structure bundling the constant tuning hypothesis.
     This asserts that `2 * C_VK * c ≤ VK_B_budget`, which ensures the
