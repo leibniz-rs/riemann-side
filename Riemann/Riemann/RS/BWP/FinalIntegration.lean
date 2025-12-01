@@ -7,7 +7,8 @@ import Riemann.RS.BWP.PhaseVelocityHypothesis
 import Riemann.RS.BWP.WedgeHypotheses
 import Riemann.RS.BWP.ZeroDensity
 import Riemann.AnalyticNumberTheory.VinogradovKorobov
-import Riemann.AnalyticNumberTheory.VKZeroFreeRegion
+-- VKZeroFreeRegion removed: was imported but not used (sorry-containing file)
+import Mathlib.NumberTheory.LSeries.RiemannZeta
 
 /-!
 # Final Integration: Hardy-Schur Pipeline
@@ -181,6 +182,23 @@ noncomputable def mkMasterHypothesis
 
 /-! ## Main Theorem -/
 
+/-- Schema (strong): assuming a bridge from the assembled master hypotheses
+    to zero-freeness on the half-plane above the VK threshold, we obtain
+    the strong RH statement for large T. -/
+theorem rs_implies_rh_large_T_strong
+    (N : ℝ → ℝ → ℝ)
+    (vk : VKZeroDensityHypothesis N)
+    (vk_weighted : VKWeightedSumHypothesis N vk)
+    (pv : PhaseVelocityHypothesis)
+    (lml : LogModulusLimitHypothesis)
+    (gi : GreenIdentityHypothesis)
+    (ld : LebesgueDifferentiationHypothesis)
+    (pp : PoissonPlateauHypothesis)
+    (h_bridge : MasterHypothesis → RH_large_T_strong (rh_threshold N vk)) :
+    RH_large_T_strong (rh_threshold N vk) := by
+  -- Build the master hypothesis and apply the bridge
+  exact h_bridge (mkMasterHypothesis N vk vk_weighted pv lml gi ld pp)
+
 /-- The main theorem: RS Structural Hypotheses imply RH for large T.
 
     This is the culmination of the Hardy-Schur approach. -/
@@ -212,6 +230,12 @@ def RH_large_T (T0 : ℝ) : Prop :=
     -- ξ(s) = 0 implies Re(s) = 1/2
     True -- Placeholder for the actual zeta zero condition
 
+/-- Strong statement of RH for large T (nontrivial predicate).
+    For zeros of the completed xi-function above height T0, real part is 1/2. -/
+def RH_large_T_strong (T0 : ℝ) : Prop :=
+  ∀ (s : ℂ), |s.im| > T0 →
+    RH.AcademicFramework.CompletedXi.riemannXi_ext s = 0 → s.re = (1 / 2 : ℝ)
+
 /-- The main result in standard form. -/
 theorem hardy_schur_main_result
     (N : ℝ → ℝ → ℝ)
@@ -225,6 +249,22 @@ theorem hardy_schur_main_result
     RH_large_T (rh_threshold N vk) := by
   intro s _hs
   trivial
+
+/-- The main result in strong form (schema):
+    from the concrete VK instantiation and a bridge lemma, deduce
+    the strong RH statement above the explicit VK threshold. -/
+theorem hardy_schur_main_result_strong
+    (N : ℝ → ℝ → ℝ)
+    (vk : VKZeroDensityHypothesis N)
+    (vk_weighted : VKWeightedSumHypothesis N vk)
+    (pv : PhaseVelocityHypothesis)
+    (lml : LogModulusLimitHypothesis)
+    (gi : GreenIdentityHypothesis)
+    (ld : LebesgueDifferentiationHypothesis)
+    (pp : PoissonPlateauHypothesis)
+    (h_bridge : MasterHypothesis → RH_large_T_strong (rh_threshold N vk)) :
+    RH_large_T_strong (rh_threshold N vk) := by
+  exact rs_implies_rh_large_T_strong N vk vk_weighted pv lml gi ld pp h_bridge
 
 /-! ## Concrete Instantiation with VK Estimates -/
 
@@ -247,6 +287,28 @@ theorem hardy_schur_with_concrete_vk
     RH_large_T (Real.exp 30) := by
   intro s _hs
   trivial
+
+/-- Strong form with the concrete VK instantiation (schema):
+    assuming a bridge from the master hypothesis to the strong RH predicate,
+    deduce the strong result at the explicit VK threshold exp(30). -/
+theorem hardy_schur_with_concrete_vk_strong
+    (pv : PhaseVelocityHypothesis)
+    (lml : LogModulusLimitHypothesis)
+    (gi : GreenIdentityHypothesis)
+    (ld : LebesgueDifferentiationHypothesis)
+    (pp : PoissonPlateauHypothesis)
+    (vk_weighted : VKWeightedSumHypothesis _ concreteVKHypothesis)
+    (h_bridge :
+      MasterHypothesis → RH_large_T_strong (Real.exp 30)) :
+    RH_large_T_strong (Real.exp 30) := by
+  -- Build the master hypothesis and apply the bridge at the concrete VK threshold
+  let master :=
+    mkMasterHypothesis
+      (N := (Nζ trivialZetaZeroFiniteHypothesis))
+      (vk := concreteVKHypothesis)
+      (vk_weighted := vk_weighted)
+      (pv := pv) (lml := lml) (gi := gi) (ld := ld) (pp := pp)
+  exact h_bridge master
 
 /-- Summary of what remains to prove:
 
@@ -275,6 +337,48 @@ theorem hardy_schur_with_concrete_vk
 
     Once all these are proved (removing the `sorry`s), the proof is complete.
 -/
-theorem proof_status : True := trivial
+
+/-- Bridge: relate ζ-zeros (excluding trivial zeros and the pole) to ξ-zeros.
+    This captures the standard identity `ξ(s) = π^{-s/2} Γ(s/2) (s-1) ζ(s)` up to normalization.
+    We only require the forward direction for the RH implication. -/
+structure ZetaXiBridgeHypothesis : Prop :=
+  (zeta_zero_implies_xi_zero :
+    ∀ s : ℂ,
+      riemannZeta s = 0 →
+      (¬∃ n : ℕ, s = -2 * (n + 1)) →
+      s ≠ 1 →
+      RH.AcademicFramework.CompletedXi.riemannXi_ext s = 0)
+
+/-- Low-height verification: all nontrivial ζ-zeros with |Im s| ≤ T0 lie on Re s = 1/2. -/
+structure LowHeightRHCheck (T0 : ℝ) : Prop :=
+  (check :
+    ∀ s : ℂ, |s.im| ≤ T0 →
+      riemannZeta s = 0 →
+      s ≠ 1 →
+      (¬∃ n : ℕ, s = -2 * (n + 1)) →
+      s.re = 1 / 2)
+
+/-- Final bridge to Mathlib's `RiemannHypothesis` from:
+    - strong large-T statement for ξ,
+    - ζ↔ξ zero bridge (forward),
+    - finite-height verification for ζ-zeros. -/
+theorem rh_from_strong_via_bridge_and_lowheight
+    {T0 : ℝ}
+    (hStrong : RH_large_T_strong T0)
+    (bridge : ZetaXiBridgeHypothesis)
+    (low : LowHeightRHCheck T0) :
+    RiemannHypothesis := by
+  -- Unfold Mathlib's RH predicate
+  unfold RiemannHypothesis
+  intro s hzeta hnotTrivial hneOne
+  -- Map ζ-zero (nontrivial, non-pole) to a ξ-zero
+  have hXi :
+      RH.AcademicFramework.CompletedXi.riemannXi_ext s = 0 :=
+    bridge.zeta_zero_implies_xi_zero s hzeta hnotTrivial hneOne
+  -- Split by height
+  by_cases hgt : |s.im| > T0
+  · exact hStrong s hgt hXi
+  · have hle : |s.im| ≤ T0 := le_of_not_gt hgt
+    exact low.check s hle hzeta hneOne hnotTrivial
 
 end RH.RS.BWP

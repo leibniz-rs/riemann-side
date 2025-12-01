@@ -11,6 +11,7 @@ import Mathlib.Analysis.Calculus.FDeriv.Linear
 import Riemann.Cert.KxiPPlus
 import Mathlib.Topology.MetricSpace.Basic
 import Mathlib.Analysis.SpecialFunctions.Trigonometric.Arctan
+import Riemann.RS.BWP.Constants
 
 /-!
 # Wedge Verification Hypotheses
@@ -21,7 +22,7 @@ separated from the full WedgeVerify.lean to avoid dependency issues.
 
 namespace RH.RS.BWP
 
-open Real MeasureTheory Set ContinuousLinearMap
+open Complex Real MeasureTheory Set ContinuousLinearMap
 
 /-! ## Admissibility Structure for Green's Identity -/
 
@@ -272,5 +273,56 @@ noncomputable def trivialGreenIdentityHypothesis : GreenIdentityHypothesis := {
     use (∫ t in _a.._b, _φ t * (-deriv _w t)), 0
     simp⟩
 }
+
+/-- VK-scale window width L(T) = cₗ / log T for T > e. -/
+noncomputable def vkWindowWidth (cL T : ℝ) : ℝ :=
+  cL / Real.log T
+
+/-- Abstract “energy in a band” functional. Instantiate with the CR–Green/Carleson band energy. -/
+@[reducible] def BandEnergy :=
+  ℝ → ℝ → ℝ -- E_band T L
+
+/-- Poisson–Jensen per-zero lower bound at VK scale (the single new classical ingredient). -/
+structure PoissonJensenPerZeroHypothesis (E_band : BandEnergy) : Prop :=
+  (cL : ℝ) (hcL : 0 < cL)
+  (c0 : ℝ) (hc0 : 0 < c0)
+  (perZero :
+    ∀ ρ : ℂ, riemannXi_ext ρ = 0 → 1 / 2 < ρ.re →
+      ∀ T, T ≥ Real.exp 30 →
+        |ρ.im| ∈ Set.Icc T (2 * T) →
+          E_band T (vkWindowWidth cL T) ≥ c0)
+
+/-- Band-wise energy smallness in the wedge regime for VK windows. -/
+structure WedgeEnergyBudgetHypothesis (E_band : BandEnergy) : Prop :=
+  (T0 : ℝ)
+  (ε : ℝ) (hε : 0 ≤ ε)
+  (bandBound :
+    ∀ T, T ≥ T0 →
+      E_band T (vkWindowWidth 1 T) ≤ ε)
+
+/-- Collected bridge hypothesis: Poisson–Jensen per-zero plus small band energy with ε < c0. -/
+structure WedgeToRHHypothesis (E_band : BandEnergy) : Prop :=
+  (pj : PoissonJensenPerZeroHypothesis E_band)
+  (budget : WedgeEnergyBudgetHypothesis E_band)
+  (hε_lt_c0 : budget.ε < pj.c0)
+
+/-! ## VK-scale windowing and band-energy wrapper (scaffolding) -/
+
+namespace EBand
+
+/-- Default band energy using the paper's Υ-based energy constant. -/
+noncomputable def fromUpsilon : BandEnergy :=
+  fun _T _L => RH.RS.BoundaryWedgeProof.energy_paper
+
+lemma fromUpsilon_nonneg (T L : ℝ) : 0 ≤ fromUpsilon T L := by
+  unfold fromUpsilon
+  exact RH.RS.BoundaryWedgeProof.energy_paper_nonneg
+
+lemma fromUpsilon_le_pi_div_four_sq (T L : ℝ) :
+    fromUpsilon T L ≤ (Real.pi / 4) ^ 2 := by
+  unfold fromUpsilon
+  exact RH.RS.BoundaryWedgeProof.energy_paper_le_pi_div_four_sq
+
+end EBand
 
 end RH.RS.BWP

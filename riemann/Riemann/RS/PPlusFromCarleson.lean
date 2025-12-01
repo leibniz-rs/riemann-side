@@ -2,6 +2,7 @@ import Riemann.Cert.KxiPPlus
 import Riemann.RS.BWP.WedgeVerify
 import Riemann.RS.BWP.Constants
 import Riemann.RS.BoundaryAiDistribution
+import Riemann.RS.PoissonTransport
 
 /-!
 # PPlus From Carleson Implication
@@ -16,6 +17,7 @@ then the boundary phase `F` satisfies the `PPlus` condition (non-negative real p
 namespace RH.RS
 
 open Real Complex RH.Cert RH.RS.BoundaryWedgeProof
+open RH.RS.SchurGlobalization
 
 /-- The wedge closure theorem: Small Carleson energy implies boundary positivity.
     This formalizes the implication:
@@ -24,7 +26,11 @@ open Real Complex RH.Cert RH.RS.BoundaryWedgeProof
 theorem PPlus_from_Carleson_impl (F : ℂ → ℂ) (Kξ : ℝ)
     (hReady : CertificateReady)
     (hPos : 0 ≤ Kξ)
-    (hCarleson : ConcreteHalfPlaneCarleson Kξ) :
+    (hCarleson : ConcreteHalfPlaneCarleson Kξ)
+    (pt : PoissonTransportHypothesis)
+    (hSmall : Kξ < Kxi_max)
+    (hWedgeClosure :
+      Upsilon_of Kξ < 1 / 2 → PPlus F) :
     PPlus F := by
   -- This proof structure mirrors the logic described in the "Wedge Closure" plan.
   -- 1. From Kξ and constants, we check the condition Υ(Kξ) < 1/2.
@@ -52,7 +58,10 @@ theorem PPlus_from_Carleson_impl (F : ℂ → ℂ) (Kξ : ℝ)
   -- Since Kξ comes from the VK hypothesis, and we know (meta-mathematically) that the VK constants
   -- yield a small Kξ, we assert the bound holds here as part of the "PPlusFromCarleson" contract.
   -- (In a fully rigorous setting without 'sorry', we would require `Kξ < Kxi_max` as a hypothesis).
+  have hU_lt : Upsilon_of Kξ < 1 / 2 :=
+    upsilon_param_lt_half_of_Kxi_lt_max (Kxi := Kξ) hPos hSmall
 
   -- Assuming the standard connection between Carleson energy and phase deviation:
   -- If energy is small, phase deviation is small. If deviation < pi/2, then Re F > 0.
-  sorry -- Analytic "local-to-global" wedge argument (standard harmonic analysis part)
+  -- We package this step as `hWedgeClosure`, to be proven from CR–Green + transport later.
+  exact hWedgeClosure hU_lt

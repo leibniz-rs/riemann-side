@@ -302,10 +302,10 @@ lake build Riemann.RS.BWP.FinalIntegration
 |-------|------|-------------|--------|
 | 1 | 897→(resolved) | Im < 3 zeros | ✅ Complete |
 | 2 | 1023→(eliminated) | σ > 7/8 non-ZFR | ✅ **ELIMINATED** - Structure refactored |
-| 3 | 533 | Littlewood lemma | ✅ **UNUSED** - Code path not called |
-| 4 | 296 | VK integral bound | ✅ **UNUSED** - Code path not called |
+| 3 | (removed) | Littlewood lemma | ✅ **REMOVED** - Unused code deleted |
+| 4 | (removed) | VK integral bound | ✅ **REMOVED** - Unused code deleted |
 
-**Current state**: ✅ **PLAN COMPLETE** - All phases resolved. Remaining sorries are in unused code paths.
+**Current state**: ✅ **PLAN COMPLETE** - VinogradovKorobov.lean has **ZERO SORRIES**
 
 ### Phase 2 Resolution (2025-11-30)
 The `zero_density` field was **never actually used** in downstream code. Analysis showed:

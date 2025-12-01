@@ -188,4 +188,11 @@ lemma riemannXi_ext_continuous_on_compl01 :
   exact ContinuousAt.continuousWithinAt
     (differentiableAt_riemannXi_ext (s := z) hz0 hz1).continuousAt
 
+/-- Partial ζ→ξ bridge on Ω: a ζ-zero on the right half-plane implies a ξ-zero. -/
+lemma zeta_zero_implies_xi_zero_on_Ω :
+  ∀ z ∈ RH.RS.Ω, riemannZeta z = 0 → riemannXi_ext z = 0 := by
+  intro z hzΩ hz0
+  have hiff := xi_ext_zeros_eq_zeta_zeros_on_Ω z hzΩ
+  exact hiff.mpr hz0
+
 end RH.AcademicFramework.CompletedXi

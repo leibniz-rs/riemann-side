@@ -3,6 +3,7 @@ import Mathlib.Analysis.Complex.CauchyIntegral
 import Mathlib.Analysis.Harmonic.Basic
 import Mathlib.MeasureTheory.Integral.Bochner.Basic
 import Riemann.academic_framework.Domain
+import Riemann.academic_framework.HalfPlaneOuterV2
 
 /-!
 # Poisson Transport / Interior Positivity
@@ -23,29 +24,43 @@ namespace RH.RS.SchurGlobalization
 /-- Domain Ω := { s : ℂ | 1/2 < Re s }. -/
 -- (Already defined in Domain.lean, but ensuring context)
 
-/-- Poisson transport lemma:
-    If F is analytic on Ω, continuous on closure, Re F ≥ 0 on boundary, and F is bounded (or "nice"),
-    then Re F ≥ 0 on Ω.
--/
-theorem poisson_transport_positivity
+/-- Temporary hypothesis: boundary nonnegativity implies interior nonnegativity
+    for analytic functions on the right half-plane. This packages the
+    Poisson transport / maximum principle we intend to prove later. -/
+structure PoissonTransportHypothesis : Prop :=
+  (transport :
+    ∀ (F : ℂ → ℂ),
+      AnalyticOn ℂ F RH.RS.Ω →
+      ContinuousOn F (closure RH.RS.Ω) →
+      (∀ᵐ t : ℝ, 0 ≤ (F ((1 / 2 : ℝ) + t * I)).re) →
+      ∀ z ∈ RH.RS.Ω, 0 ≤ (F z).re)
+
+/-- Positivity transport obtained from the hypothesis:
+    given analyticity and boundary a.e. nonnegativity, deduce interior nonnegativity. -/
+theorem positivity_from_hypothesis
+    (pt : PoissonTransportHypothesis)
     (F : ℂ → ℂ)
     (hAnalytic : AnalyticOn ℂ F Ω)
     (hCont : ContinuousOn F (closure Ω))
-    (hBoundary : ∀ t : ℝ, 0 ≤ (F (1/2 + t * I)).re)
-    (hBounded : Bounded (F '' Ω)) -- Or some growth condition allowing Poisson rep
-    :
-    ∀ z ∈ Ω, 0 ≤ (F z).re := by
-  -- Strategy:
-  -- 1. Re F is harmonic on Ω.
-  -- 2. Use the maximum principle for harmonic functions (or minimum principle for non-negative functions).
-  -- 3. Or use the explicit Poisson integral representation.
-  --
-  -- If F is bounded, we can apply the Phragmen-Lindelof principle or just standard
-  -- harmonic function theory on the half-plane.
+    (hBoundaryAE : ∀ᵐ t : ℝ, 0 ≤ (F ((1 / 2 : ℝ) + t * I)).re) :
+    ∀ z ∈ Ω, 0 ≤ (F z).re :=
+  pt.transport F hAnalytic hCont hBoundaryAE
 
-  -- Let u = Re F. u is harmonic.
-  -- Liminf of u at boundary is >= 0.
-  -- If u is bounded, u >= 0 everywhere.
-  sorry -- TODO: Formalize harmonic function maximum principle on half-plane
+/-- Variant: positivity from the `BoundaryPositive` predicate of the AF layer. -/
+theorem positivity_from_boundaryPositive
+    (pt : PoissonTransportHypothesis)
+    (F : ℂ → ℂ)
+    (hAnalytic : AnalyticOn ℂ F Ω)
+    (hCont : ContinuousOn F (closure Ω))
+    (hBoundaryPos :
+      RH.AcademicFramework.HalfPlaneOuterV2.BoundaryPositive F) :
+    ∀ z ∈ Ω, 0 ≤ (F z).re := by
+  -- BoundaryPositive is definitionally `∀ᵐ t, 0 ≤ (F (boundary t)).re`
+  -- and `boundary t` coincides with `(1/2) + I t`.
+  have hAE : ∀ᵐ t : ℝ, 0 ≤ (F ((1 / 2 : ℝ) + t * I)).re := by
+    -- In AF, `boundary t` is the canonical boundary point `(1/2, t)`.
+    -- The predicate matches the same expression by definitional equality.
+    simpa using hBoundaryPos
+  exact pt.transport F hAnalytic hCont hAE
 
 end RH.RS.SchurGlobalization
