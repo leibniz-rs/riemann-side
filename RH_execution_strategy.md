@@ -48,6 +48,21 @@ We execute the minimal path to unconditional closure, prioritized by impact on t
 7) Wire final schemas and low-height verification
    - Ensure rh_from_master_hypotheses closes using strong pipeline + ζ↔ξ bridge + LowHeightRHCheck (existing finite certificate).
 
+### Parallel Track: Nonclassical focus (axiom‑bridged), aligned with RH_focus_nonclassical_plan.md
+
+Purpose: keep the unconditional mainline above as the primary route, while in parallel pursuing the “single non‑classical ingredient” route that axiomatizes standard classical inputs and focuses effort on a uniform per‑zero band‑energy lower bound at VK scale.
+
+- Files (present): `riemann/Riemann/RS/ClassicalAxioms.lean`, `riemann/Riemann/RS/BWP/PerZeroLowerBound.lean`, `riemann/Riemann/RS/BWP/RHFromAxiomsAndPerZero.lean`.
+- Goal: prove `PerZeroEnergyLowerBoundHypothesis` (aka Poisson–Jensen per‑zero band‑energy lower bound) without axioms; use axiom shims only for VK, Whitney→P+, Poisson rep, and removable singularities until later removal.
+- Deliverable (alt route): `rh_from_classical_axioms_and_per_zero : PerZeroEnergyLowerBoundHypothesis → RiemannHypothesis`.
+- Current status (Dec 2, 2025):
+  - PerZeroLowerBound.lean: 3 sorries (core research target)
+  - RHFromAxiomsAndPerZero.lean: 0 sorries (bridge wired)
+  - ClassicalAxioms.lean: 0 sorries (contains axioms to be discharged later)
+- Acceptance (parallel track):
+  - Interim: RH under classical axioms + proven per‑zero bound (for exploration).
+  - Final: remove axioms by completing VK, Whitney→P+, Poisson rep, Jensen rectangle, and analyticity transfer proofs; then both routes yield unconditional RH.
+
 
 ### Detailed Milestones and Acceptance Criteria
 
