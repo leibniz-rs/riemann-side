@@ -12,6 +12,7 @@ import Riemann.Cert.KxiPPlus
 import Mathlib.Topology.MetricSpace.Basic
 import Mathlib.Analysis.SpecialFunctions.Trigonometric.Arctan
 import Riemann.RS.BWP.Constants
+import Riemann.academic_framework.CompletedXi
 
 /-!
 # Wedge Verification Hypotheses
@@ -283,28 +284,27 @@ noncomputable def vkWindowWidth (cL T : ℝ) : ℝ :=
   ℝ → ℝ → ℝ -- E_band T L
 
 /-- Poisson–Jensen per-zero lower bound at VK scale (the single new classical ingredient). -/
-structure PoissonJensenPerZeroHypothesis (E_band : BandEnergy) : Prop :=
-  (cL : ℝ) (hcL : 0 < cL)
-  (c0 : ℝ) (hc0 : 0 < c0)
+structure PoissonJensenPerZeroHypothesis (E_band : BandEnergy) (cL c0 : ℝ) : Prop :=
+  (hcL : 0 < cL)
+  (hc0 : 0 < c0)
   (perZero :
-    ∀ ρ : ℂ, riemannXi_ext ρ = 0 → 1 / 2 < ρ.re →
+    ∀ ρ : ℂ, RH.AcademicFramework.CompletedXi.riemannXi_ext ρ = 0 → 1 / 2 < ρ.re →
       ∀ T, T ≥ Real.exp 30 →
         |ρ.im| ∈ Set.Icc T (2 * T) →
           E_band T (vkWindowWidth cL T) ≥ c0)
 
 /-- Band-wise energy smallness in the wedge regime for VK windows. -/
-structure WedgeEnergyBudgetHypothesis (E_band : BandEnergy) : Prop :=
-  (T0 : ℝ)
-  (ε : ℝ) (hε : 0 ≤ ε)
+structure WedgeEnergyBudgetHypothesis (E_band : BandEnergy) (T0 ε : ℝ) : Prop :=
+  (hε : 0 ≤ ε)
   (bandBound :
     ∀ T, T ≥ T0 →
       E_band T (vkWindowWidth 1 T) ≤ ε)
 
 /-- Collected bridge hypothesis: Poisson–Jensen per-zero plus small band energy with ε < c0. -/
-structure WedgeToRHHypothesis (E_band : BandEnergy) : Prop :=
-  (pj : PoissonJensenPerZeroHypothesis E_band)
-  (budget : WedgeEnergyBudgetHypothesis E_band)
-  (hε_lt_c0 : budget.ε < pj.c0)
+structure WedgeToRHHypothesis (E_band : BandEnergy) (cL c0 T0 ε : ℝ) : Prop :=
+  (pj : PoissonJensenPerZeroHypothesis E_band cL c0)
+  (budget : WedgeEnergyBudgetHypothesis E_band T0 ε)
+  (hε_lt_c0 : ε < c0)
 
 /-! ## VK-scale windowing and band-energy wrapper (scaffolding) -/
 

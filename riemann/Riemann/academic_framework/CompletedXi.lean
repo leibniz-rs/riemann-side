@@ -195,4 +195,32 @@ lemma zeta_zero_implies_xi_zero_on_Ω :
   have hiff := xi_ext_zeros_eq_zeta_zeros_on_Ω z hzΩ
   exact hiff.mpr hz0
 
+/-- On the right half-plane {Re z > 0}, zeros of `riemannXi_ext` coincide with zeros of `riemannZeta`. -/
+lemma xi_ext_zeros_eq_zeta_zeros_on_right (z : ℂ) (hzpos : 0 < z.re) :
+    riemannXi_ext z = 0 ↔ riemannZeta z = 0 := by
+  -- Gamma factor is nonzero on Re z > 0
+  have hΓnz : Complex.Gammaℝ z ≠ 0 := Complex.Gammaℝ_ne_zero_of_re_pos hzpos
+  -- ζ definition away from 0; `Re z > 0` implies `z ≠ 0`
+  have hz_ne_zero : z ≠ 0 := by
+    intro h0; simp [h0, Complex.zero_re] at hzpos
+  have hζ : riemannZeta z = completedRiemannZeta z / Complex.Gammaℝ z :=
+    riemannZeta_def_of_ne_zero (s := z) hz_ne_zero
+  constructor
+  · intro hXi
+    -- Λ z = 0 ⇒ ζ z = 0
+    have hΛ0 : completedRiemannZeta z = 0 := by simpa [riemannXi_ext] using hXi
+    calc
+      riemannZeta z = completedRiemannZeta z / Complex.Gammaℝ z := hζ
+      _ = completedRiemannZeta z * (Complex.Gammaℝ z)⁻¹ := by rw [div_eq_mul_inv]
+      _ = 0 := by simp [hΛ0]
+  · intro hζ0
+    -- ζ z = 0 and Γℝ z ≠ 0 ⇒ Λ z = 0
+    have hdiv0 : completedRiemannZeta z / Complex.Gammaℝ z = 0 := by
+      simpa [hζ] using hζ0
+    have hΛ0 : completedRiemannZeta z = 0 := by
+      by_contra hΛ
+      have : completedRiemannZeta z / Complex.Gammaℝ z ≠ 0 := div_ne_zero hΛ hΓnz
+      exact this hdiv0
+    simpa [riemannXi_ext] using hΛ0
+
 end RH.AcademicFramework.CompletedXi
