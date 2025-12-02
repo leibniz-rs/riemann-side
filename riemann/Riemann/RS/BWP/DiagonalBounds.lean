@@ -2507,6 +2507,27 @@ theorem interior_positive_J_canonical_from_PPlus
     interior_positive_J_canonical
       (hRep := hRep) (hBdry := hBdry) (h₁ := h₁)
 
+/-- Interior positivity on `offXi` for the canonical field, assuming:
+  * a Poisson representation for the pinch field on `offXi`;
+  * a boundary `(P+)` witness for the canonical field.
+
+This version does NOT require the special-value nonnegativity at `z = 1`,
+because `offXi` explicitly excludes `z = 1`. This is the correct version
+for the RH proof, since the Schur globalization only needs interior positivity
+at neighborhoods of ζ-zeros, which can be chosen to exclude `z = 1`. -/
+theorem interior_positive_J_canonical_from_PPlus_offXi
+    (hRep :
+      HasPoissonRepOn
+        (RH.AcademicFramework.HalfPlaneOuterV2.F_pinch det2 outer_exists.outer)
+        offXi)
+    (hP : WhitneyAeCore.PPlus_canonical) :
+    ∀ z ∈ offXi, 0 ≤ ((2 : ℂ) * J_canonical z).re := by
+  -- Boundary (P+) ⇒ `BoundaryPositive` for the AF pinch field.
+  have hBdry :
+      BoundaryPositive (RH.AcademicFramework.HalfPlaneOuterV2.F_pinch det2 outer_exists.outer) :=
+    WhitneyAeCore.boundaryPositive_pinch_from_PPlus_canonical hP
+  -- Apply Poisson transport on offXi (no special value at z=1 needed)
+  exact poisson_transport_interior_offXi (hRep := hRep) (hBdry := hBdry)
 
 /-- Complex derivative of `G_U` on the zero-free region. -/
 lemma G_U_hasDerivAt_of_offZeros {z : ℂ}

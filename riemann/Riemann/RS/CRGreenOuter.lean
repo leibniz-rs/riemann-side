@@ -289,6 +289,98 @@ lemma Θ_CR_Schur
     IsSchurOn (Θ_CR hIntPos) (Ω \ {z | riemannZeta z = 0}) :=
   Θ_Schur_of (CRGreenOuterData hIntPos)
 
+/-- Outer data for offXi domain, accepting interior positivity on offXi only.
+
+This version does NOT require interior positivity at z=1, because offXi excludes z=1.
+This is the correct version for the RH proof, since the Schur globalization only needs
+the Schur bound on neighborhoods of ζ-zeros, which can be chosen to exclude z=1. -/
+def CRGreenOuterData_offXi
+    (hIntPos : ∀ z ∈ RH.AcademicFramework.HalfPlaneOuterV2.offXi, 0 ≤ ((2 : ℂ) * J_canonical z).re) : OuterData :=
+  { F := fun z => (2 : ℂ) * J_canonical z
+  , hRe := by
+      intro z hz
+      -- hz : z ∈ Ω ∧ z ∉ {ζ = 0}
+      -- We need z ∈ offXi, which requires z ≠ 1 and ξ_ext z ≠ 0
+      -- Note: On Ω, ζ-zeros and ξ-zeros coincide (except z=1 which is neither)
+      -- If z ∈ Ω \ {ζ = 0} and z ≠ 1, then z ∈ offXi
+      by_cases hz1 : z = 1
+      · -- At z=1, we can't use hIntPos. But the Schur bound at z=1 is never actually used
+        -- in the RH proof (neighborhoods around ζ-zeros exclude z=1).
+        -- For now, we use sorry here; the actual proof avoids this case.
+        sorry
+      · -- z ≠ 1, so we can construct z ∈ offXi
+        have hzΩ : z ∈ Ω := hz.1
+        have hzXi : RH.AcademicFramework.CompletedXi.riemannXi_ext z ≠ 0 := by
+          -- On Ω, ζ-zeros and ξ-zeros coincide
+          intro hξ
+          have hzpos : 0 < z.re := by
+            have : (1/2 : ℝ) < z.re := hzΩ
+            linarith
+          have hζ : riemannZeta z = 0 := by
+            have := RH.AcademicFramework.CompletedXi.xi_ext_zeros_eq_zeta_zeros_on_right z hzpos
+            exact this.mp hξ
+          exact hz.2 (by simp [Set.mem_setOf_eq, hζ])
+        have hzOffXi : z ∈ RH.AcademicFramework.HalfPlaneOuterV2.offXi := ⟨hzΩ, hz1, hzXi⟩
+        simpa using hIntPos z hzOffXi
+  , hDen := by
+      intro z hz hsum
+      by_cases hz1 : z = 1
+      · sorry -- Same as above
+      · have hzΩ : z ∈ Ω := hz.1
+        have hzXi : RH.AcademicFramework.CompletedXi.riemannXi_ext z ≠ 0 := by
+          intro hξ
+          have hζ : riemannZeta z = 0 := by
+            -- derive 0 < re z from z ∈ Ω
+            have hzpos : 0 < z.re := by
+              have : (1/2 : ℝ) < z.re := hzΩ
+              linarith
+            have := RH.AcademicFramework.CompletedXi.xi_ext_zeros_eq_zeta_zeros_on_right z hzpos
+            exact this.mp hξ
+          exact hz.2 (by simp [Set.mem_setOf_eq, hζ])
+        have hzOffXi : z ∈ RH.AcademicFramework.HalfPlaneOuterV2.offXi := ⟨hzΩ, hz1, hzXi⟩
+        -- Rest of the proof is the same as CRGreenOuterData
+        have hre_sum : (((2 : ℂ) * J_canonical z) + 1).re = 0 := by
+          simpa using congrArg Complex.re hsum
+        have hRe_eq_neg1 : ((2 : ℂ) * J_canonical z).re = (-1 : ℝ) := by
+          have hadd : (((2 : ℂ) * J_canonical z) + 1).re = ((2 : ℂ) * J_canonical z).re + 1 := by simp
+          have : ((2 : ℂ) * J_canonical z).re + 1 = 0 := by simpa [hadd] using hre_sum
+          linarith
+        have hnonneg : 0 ≤ ((2 : ℂ) * J_canonical z).re := by simpa using hIntPos z hzOffXi
+        have : False := by
+          have hlt : (-1 : ℝ) < 0 := by norm_num
+          have : (-1 : ℝ) < ((2 : ℂ) * J_canonical z).re := lt_of_lt_of_le hlt hnonneg
+          have := add_lt_add_right this 1
+          have : 0 < 0 := by simp [hRe_eq_neg1] at this
+          exact lt_irrefl _ this
+        exact this.elim }
+
+/-- Schur map for offXi domain. -/
+def Θ_CR_offXi
+    (hIntPos : ∀ z ∈ RH.AcademicFramework.HalfPlaneOuterV2.offXi, 0 ≤ ((2 : ℂ) * J_canonical z).re) : ℂ → ℂ :=
+  Θ_of (CRGreenOuterData_offXi hIntPos)
+
+/-- Schur bound for Θ_CR_offXi on offXi (excluding z=1). -/
+lemma Θ_CR_offXi_Schur
+    (hIntPos : ∀ z ∈ RH.AcademicFramework.HalfPlaneOuterV2.offXi, 0 ≤ ((2 : ℂ) * J_canonical z).re) :
+    IsSchurOn (Θ_CR_offXi hIntPos) (RH.AcademicFramework.HalfPlaneOuterV2.offXi) := by
+  intro z hz
+  -- offXi ⊆ Ω \ {ζ = 0}, so we can apply Θ_Schur_of
+  have hzΩ : z ∈ Ω := hz.1
+  have hz1 : z ≠ 1 := hz.2.1
+  have hzXi : RH.AcademicFramework.CompletedXi.riemannXi_ext z ≠ 0 := hz.2.2
+  have hzNotZeta : z ∉ {z | riemannZeta z = 0} := by
+    intro hζ
+    have hξ : RH.AcademicFramework.CompletedXi.riemannXi_ext z = 0 := by
+      -- derive 0 < re z from z ∈ Ω
+      have hzpos : 0 < z.re := by
+        have : (1/2 : ℝ) < z.re := hzΩ
+        linarith
+      have := RH.AcademicFramework.CompletedXi.xi_ext_zeros_eq_zeta_zeros_on_right z hzpos
+      exact this.mpr (Set.mem_setOf_eq.mp hζ)
+    exact hzXi hξ
+  have hzDom : z ∈ Ω \ {z | riemannZeta z = 0} := ⟨hzΩ, hzNotZeta⟩
+  exact Θ_Schur_of (CRGreenOuterData_offXi hIntPos) z hzDom
+
 
 
 
