@@ -40,6 +40,15 @@ import Riemann.RS.BWP.Laplacian
 import Riemann.RS.BWP.CRCalculus
 --import Riemann.RS.BWP.DiagonalBounds
 
+-- Active BWP pipeline files (added to top-level build)
+import Riemann.RS.BWP.PhaseVelocityHypothesis
+import Riemann.RS.BWP.WedgeHypotheses
+import Riemann.RS.BWP.ZeroDensity
+import Riemann.RS.VKStandalone
+import Riemann.AnalyticNumberTheory.VinogradovKorobov
+import Riemann.RS.BWP.EnergyToPPlus
+import Riemann.RS.BWP.FinalIntegration
+
 import Riemann.Mathlib.Analysis.Calculus.TaylorIntegral
 import Riemann.Mathlib.Analysis.SpecialFunctions.Gaussian.GaussianIntegral
 import Riemann.Mathlib.ArctanTwoGtOnePointOne
