@@ -6,27 +6,51 @@ Goal: Close the remaining analytic and number-theoretic gaps and finish a fully 
 ### Current Build Status (Updated Dec 3, 2025 - Session 13)
 
 - Build: compiles successfully (no errors)
-- **STATUS**: 3 axioms, 1 sorry remaining (intentionally false, not used)
-- **PROOF ESSENTIALLY COMPLETE**: All non-classical work done
+- **STATUS**: NOT FULLY UNCONDITIONAL - axioms and sorries remain
+
+#### Auditor's Assessment (Accurate)
+- **Total sorries in repo**: 57
+- **Total axioms in repo**: 17
+- **ClassicalAxioms import**: 1 file (RHFromAxiomsAndPerZero.lean)
+- **Conclusion**: Proof is conditional on classical axiom bridges
 
 #### FinalIntegration.lean Status:
-- **Axioms** (3 total - all classical analysis):
-  - `poisson_rep_on_offXi_axiom` (line 1037): Poisson integral formula for half-plane
-  - `theta_cr_pinned_data_axiom` (line 1056): Riemann removable singularity + Cayley
-  - `phase_bound_from_energy_axiom` (line 1082): Green-Cauchy-Schwarz-Lebesgue chain
+- **Axioms** (3 in this file):
+  - `poisson_rep_on_offXi_axiom` (line 1037): Poisson integral formula
+  - `theta_cr_pinned_data_axiom` (line 1056): Removable singularity + Cayley
+  - `phase_bound_from_energy_axiom` (line 1082): Harmonic analysis chain
 
-- **Sorries remaining** (1 intentionally false):
-  - Line 1350: `special_value_at_one_nonneg` (INTENTIONALLY FALSE; not used in proof)
+- **Sorries** (1 in this file):
+  - Line 1350: `special_value_at_one_nonneg` (intentionally false, not used)
 
-- **CRGreenOuter.lean** (2 sorries - structural, unreachable):
-  - Lines 310, 328: z=1 edge cases (mathematically false, never evaluated)
+#### ClassicalAxioms.lean Status (14 axioms):
+- `vk_zero_density_axiom`: Vinogradov-Korobov zero density
+- `log_deriv_zeta_bound_axiom`: Log derivative bounds
+- `log_zeta_bound_axiom`: Log zeta bounds
+- `phase_velocity_axiom`: Phase velocity identity
+- `log_modulus_limit_axiom`: Log modulus convergence
+- `green_identity_axiom`: Green's identity
+- `lebesgue_differentiation_axiom`: Lebesgue differentiation
+- `poisson_plateau_axiom`: Poisson plateau bounds
+- `whitney_wedge_to_PPlus_axiom`: Whitney wedge → PPlus
+- `poisson_rep_on_offXi_axiom`: Poisson representation
+- `theta_cr_pinned_data_axiom`: Theta pinned data
+- `low_height_rh_check_axiom`: Low height RH verification
 
-- **COMPLETED across all sessions**:
-  - ✅ All namespace mismatch sorries fixed
-  - ✅ Measurability of J_CR ∘ boundary proved
-  - ✅ Classical trigonometry formalized
-  - ✅ Lebesgue differentiation applied correctly
-  - ✅ Build compiles successfully (7498 jobs)
+#### Other files with sorries:
+- MellinThetaZeta'.lean: 13 sorries (Mellin transform theory)
+- MellinThetaZeta''.lean: 7 sorries (Mellin transform theory)
+- PhaseVelocityHypothesis.lean: 4 sorries
+- VinogradovKorobov.lean: 4 sorries
+- ReproducingKernel/Basic.lean: 4 sorries
+- Fredholm/Defs.lean: 4 sorries
+- And others...
+
+#### What IS complete:
+- ✅ Main proof architecture in FinalIntegration.lean
+- ✅ Namespace mismatch issues resolved
+- ✅ Measurability proofs
+- ✅ Build compiles successfully (7498 jobs)
 
 - **FIXED this session**:
   - ✅ Restructured `whitney_wedge_to_PPlus_theorem` to use Lebesgue differentiation properly

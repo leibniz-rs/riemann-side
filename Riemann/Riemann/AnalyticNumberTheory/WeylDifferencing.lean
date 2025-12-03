@@ -42,6 +42,11 @@ theorem weyl_differencing
     (g : ℤ → ℝ) (N L : ℤ) (hL : 0 < L) :
     ‖∑ n in Ioc N (N + L), e (g n)‖ ^ 2 ≤
       (L : ℝ) + 2 * ∑ h in Ioc 0 (L - 1), ‖∑ n in Ioc N (N + L - h), e (g (n + h) - g n)‖ := by
+  -- Proof: Expand |S|² = S · S̄ and use triangle inequality
+  -- |S|² = ∑∑ e(g(n) - g(m)) = ∑∑ e(g(n+h) - g(n)) where h = n-m
+  -- The h=0 terms contribute L (diagonal)
+  -- The h≠0 terms contribute ≤ 2 * ∑_{h>0} |S_h|
+  -- This is a classical result in analytic number theory (Weyl 1916)
   sorry
 
 /-- Weyl differencing with adjustable shift H.

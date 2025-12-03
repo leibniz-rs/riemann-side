@@ -145,20 +145,30 @@ def quotientProdEquivProdQuotient (R : Submodule 𝕜 Y) (R' : Submodule 𝕜 Y'
     (by intro ⟨y, y'⟩ ⟨hy, hy'⟩; exact hy')
   map_add' := by
     intro x y
-    -- Quotient.map₂ is defined so that it's additive
-    sorry
+    -- Both sides are in a quotient; lift to representatives
+    induction x using Quotient.inductionOn with | h x =>
+    induction y using Quotient.inductionOn with | h y =>
+    simp only [Submodule.Quotient.mk''_eq_mk, ← Submodule.Quotient.mk_add]
+    rfl
   map_smul' := by
     intro c x
-    sorry
+    induction x using Quotient.inductionOn with | h x =>
+    simp only [Submodule.Quotient.mk''_eq_mk, RingHom.id_apply, ← Submodule.Quotient.mk_smul]
+    rfl
   invFun := fun ⟨qy, qy'⟩ => Submodule.Quotient.mk (qy.liftOn (fun y => qy'.liftOn (fun y' => (y, y'))
     (by intro a b hab; simp [Submodule.Quotient.eq] at hab; simp [hab]))
     (by intro a b hab; simp [Submodule.Quotient.eq] at hab ⊢; ext <;> simp [hab]))
   left_inv := by
     intro x
-    sorry
+    induction x using Quotient.inductionOn with | h x =>
+    simp only [Submodule.Quotient.mk''_eq_mk]
+    rfl
   right_inv := by
     intro ⟨qy, qy'⟩
-    sorry
+    induction qy using Quotient.inductionOn with | h y =>
+    induction qy' using Quotient.inductionOn with | h y' =>
+    simp only [Submodule.Quotient.mk''_eq_mk, Submodule.Quotient.liftOn_mk]
+    rfl
 
 /-- Alternative construction using the universal property -/
 def quotientProdEquivProdQuotient' (R : Submodule 𝕜 Y) (R' : Submodule 𝕜 Y') :

@@ -368,8 +368,21 @@ noncomputable def mkLogModulusLimitFromDet2
   log_modulus_L1_convergence := fun _I => by
     use h_deriv.boundary_log_modulus
     constructor
-    · -- Need to show locally integrable from integrableOn
-      sorry
+    · -- LocallyIntegrable from IntegrableOn each Whitney interval
+      intro x
+      -- For any point x, construct a Whitney interval containing x
+      let W : RH.Cert.WhitneyInterval := ⟨x, 1, one_pos⟩
+      -- W.interval = [x - 1, x + 1] is a neighborhood of x
+      use W.interval
+      constructor
+      · -- Show W.interval ∈ nhds x
+        rw [Metric.mem_nhds_iff]
+        use 1, one_pos
+        intro y hy
+        simp only [RH.Cert.WhitneyInterval.interval, Set.mem_Icc]
+        simp only [Metric.mem_ball, Real.dist_eq] at hy
+        constructor <;> linarith [abs_lt.mp hy]
+      · exact h_deriv.integrability W
     · trivial
   implies_no_singular := trivial
 }

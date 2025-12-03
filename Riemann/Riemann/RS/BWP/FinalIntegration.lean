@@ -1578,7 +1578,7 @@ theorem no_zeros_from_interior_positivity
       -- z ≠ 1 because 1 ∉ U (from h1NotU) and z ∈ U
       have hz1 : z ≠ 1 := fun h => h1NotU (h ▸ hzU)
       -- Since z ≠ 1, Θ_ext(z) = Θ_CR_offXi(z) = g(z)
-      simp only [Θ_ext, Θ_CR_ext, hz1, if_false]
+      simp only [Θ_ext, Θ_CR_ext, hz1, ↓reduceIte]
       exact hEqOn hz
   -- Apply the globalization theorem
   exact RH.RS.no_offcritical_zeros_from_schur Θ_ext hSchurExt assign_ext
@@ -1606,8 +1606,11 @@ theorem master_to_rh_large_T_strong
 This section assembles the complete `WedgeToRHBridgeHypothesis` from the individual
 component theorems. The key insight is that once we have:
 1. `upsilon_lt_half_implies_PPlus_canonical` (Whitney covering)
-2. `canonical_pinch_has_poisson_rep` + `special_value_at_one_nonneg` (Poisson representation)
+2. `canonical_pinch_has_poisson_rep` (Poisson representation on offXi)
 3. `theta_cr_pinned_data` (Local assignment)
+
+Note: The theorem `special_value_at_one_nonneg` is mathematically false but NOT used,
+as the proof uses `interior_positive_J_canonical_from_PPlus_offXi` which works on `offXi`.
 
 We can derive interior positivity from (1) + (2), then use (3) to get no zeros in Ω.
 -/
