@@ -27,7 +27,6 @@ theorem PPlus_from_Carleson_impl (F : ℂ → ℂ) (Kξ : ℝ)
     (hReady : CertificateReady)
     (hPos : 0 ≤ Kξ)
     (hCarleson : ConcreteHalfPlaneCarleson Kξ)
-    (pt : PoissonTransportHypothesis)
     (hSmall : Kξ < Kxi_max)
     (hWedgeClosure :
       Upsilon_of Kξ < 1 / 2 → PPlus F) :

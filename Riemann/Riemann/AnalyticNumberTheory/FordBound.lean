@@ -76,7 +76,7 @@ theorem ford_bound_1_6_2_3
   -- Mistake: In Weyl differencing, we can choose H < L by shifting intervals?
   -- No, standard Weyl is with full range.
   -- "Weyl differencing" usually refers to the shifted version:
-  -- |S|^2 ≤ (N/H)^2 * (H + Sum_{h<H} |S_h|).
+  -- |S|^2 ≤ (N/H)^2 * (H + Sum_{h < H} |S_h|).
   -- The version implemented in WeylDifferencing.lean is the "full range" one (H=L).
   -- For exponent pairs, we need the version with adjustable H.
 

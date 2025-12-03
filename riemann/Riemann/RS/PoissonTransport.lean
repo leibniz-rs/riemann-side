@@ -18,49 +18,44 @@ This is essentially the Herglotz representation theorem or properties of harmoni
 noncomputable section
 
 open Complex Real Set Filter Metric
+open RH.AcademicFramework.HalfPlaneOuterV2
 
 namespace RH.RS.SchurGlobalization
 
 /-- Domain Ω := { s : ℂ | 1/2 < Re s }. -/
 -- (Already defined in Domain.lean, but ensuring context)
 
-/-- Temporary hypothesis: boundary nonnegativity implies interior nonnegativity
-    for analytic functions on the right half-plane. This packages the
-    Poisson transport / maximum principle we intend to prove later. -/
+/-- Poisson transport hypothesis:
+    if a function admits a Poisson representation on Ω and its boundary trace
+    has non-negative real part almost everywhere, then it is non-negative in Ω. -/
 structure PoissonTransportHypothesis : Prop :=
   (transport :
-    ∀ (F : ℂ → ℂ),
-      AnalyticOn ℂ F RH.RS.Ω →
-      ContinuousOn F (closure RH.RS.Ω) →
-      (∀ᵐ t : ℝ, 0 ≤ (F ((1 / 2 : ℝ) + t * I)).re) →
-      ∀ z ∈ RH.RS.Ω, 0 ≤ (F z).re)
+    ∀ {F : ℂ → ℂ},
+      HasPoissonRep F →
+      BoundaryPositive F →
+      ∀ z ∈ Ω, 0 ≤ (F z).re)
 
 /-- Positivity transport obtained from the hypothesis:
-    given analyticity and boundary a.e. nonnegativity, deduce interior nonnegativity. -/
+    supplied Poisson representations plus boundary positivity imply interior positivity. -/
 theorem positivity_from_hypothesis
     (pt : PoissonTransportHypothesis)
-    (F : ℂ → ℂ)
-    (hAnalytic : AnalyticOn ℂ F Ω)
-    (hCont : ContinuousOn F (closure Ω))
-    (hBoundaryAE : ∀ᵐ t : ℝ, 0 ≤ (F ((1 / 2 : ℝ) + t * I)).re) :
+    {F : ℂ → ℂ}
+    (hRep : HasPoissonRep F)
+    (hBoundary : BoundaryPositive F) :
     ∀ z ∈ Ω, 0 ≤ (F z).re :=
-  pt.transport F hAnalytic hCont hBoundaryAE
+  pt.transport hRep hBoundary
 
 /-- Variant: positivity from the `BoundaryPositive` predicate of the AF layer. -/
 theorem positivity_from_boundaryPositive
     (pt : PoissonTransportHypothesis)
-    (F : ℂ → ℂ)
-    (hAnalytic : AnalyticOn ℂ F Ω)
-    (hCont : ContinuousOn F (closure Ω))
-    (hBoundaryPos :
-      RH.AcademicFramework.HalfPlaneOuterV2.BoundaryPositive F) :
-    ∀ z ∈ Ω, 0 ≤ (F z).re := by
-  -- BoundaryPositive is definitionally `∀ᵐ t, 0 ≤ (F (boundary t)).re`
-  -- and `boundary t` coincides with `(1/2) + I t`.
-  have hAE : ∀ᵐ t : ℝ, 0 ≤ (F ((1 / 2 : ℝ) + t * I)).re := by
-    -- In AF, `boundary t` is the canonical boundary point `(1/2, t)`.
-    -- The predicate matches the same expression by definitional equality.
-    simpa using hBoundaryPos
-  exact pt.transport F hAnalytic hCont hAE
+    {F : ℂ → ℂ}
+    (hRep : HasPoissonRep F)
+    (hBoundaryPos : BoundaryPositive F) :
+    ∀ z ∈ Ω, 0 ≤ (F z).re :=
+  pt.transport hRep hBoundaryPos
+
+/-- The canonical Poisson transport witness coming from the AF layer. -/
+def builtinPoissonTransportHypothesis : PoissonTransportHypothesis :=
+  ⟨fun {F} hRep => poissonTransport hRep⟩
 
 end RH.RS.SchurGlobalization

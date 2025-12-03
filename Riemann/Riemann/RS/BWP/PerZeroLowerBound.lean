@@ -66,16 +66,34 @@ noncomputable def vk_band_width (cL T : ℝ) : ℝ :=
 
 /-- The CR–Green energy of a function over a band.
 
-    E_band(f, T, L) = ∫∫_{band} |∇ log|f||² dσ
+    E_band(f, T, L) = ∬_{band} |∇ log|f||² dA
 
     where the band is {s : 1/2 < Re s < 1, T - L/2 < Im s < T + L/2}.
 
-    For the canonical field J_canonical, we use EBand.fromUpsilon which
-    is calibrated to the paper's energy constant. -/
-noncomputable def band_energy (_f : ℂ → ℂ) (_T _L : ℝ) : ℝ :=
-  -- Use the paper's energy functional from WedgeHypotheses
-  -- Note: This is a constant (energy_paper) for calibration purposes
-  RH.RS.BoundaryWedgeProof.energy_paper
+    This is the Dirichlet energy of the log-modulus of f in the strip
+    around height T with width L. The energy measures the "roughness"
+    of log|f| in the band.
+
+    Key properties:
+    - Each zero ρ of f in the band contributes a positive amount to the energy
+    - The CR–Green identity relates boundary integrals to this bulk energy
+    - Carleson measure theory bounds this energy
+
+    MATHEMATICAL NOTE: For meromorphic f, the function U = log|f| is harmonic
+    except at zeros and poles. By potential theory:
+    - At a zero of order m, ∇U has a singularity but ‖∇U‖² is locally integrable
+    - The integral ∬ ‖∇U‖² dA is finite and equals the Dirichlet energy
+    - The energy can be computed via the CR-Green identity relating it to
+      boundary integrals and the zero count -/
+noncomputable def band_energy (f : ℂ → ℂ) (T L : ℝ) : ℝ :=
+  -- The log-modulus in real coordinates
+  let U_real : ℝ × ℝ → ℝ := fun ⟨x, y⟩ => Real.log ‖f (Complex.mk x y)‖
+  -- The band in real coordinates (using Ioc to make it measurable)
+  let band_real : Set (ℝ × ℝ) :=
+    Set.Ioc (1/2 : ℝ) 1 ×ˢ Set.Ioc (T - L/2) (T + L/2)
+  -- The Dirichlet energy integral
+  -- NOTE: The integral is well-defined for meromorphic f by potential theory
+  ∫ p in band_real, ‖fderiv ℝ U_real p‖^2
 
 /-! ## 1. Statement of the Per-Zero Lower Bound -/
 
@@ -266,48 +284,83 @@ lemma blaschke_phase_deriv_L2_lower_bound
 
 /-! ## 4. CR–Green Energy Identity -/
 
-/-- CR–Green identity: band_energy equals energy_paper.
+/-- CR–Green identity: relates band_energy to boundary phase integral.
 
-    Note: band_energy is defined as energy_paper (constant) for calibration purposes.
-    This simplifies the proof structure while maintaining the energy bound semantics. -/
+    The CR–Green identity states that for meromorphic f with log|f| harmonic
+    away from zeros/poles:
+
+    ∬_{band} |∇ log|f||² dA = ∫_{∂band} (log|f|) · ∂_n(log|f|) ds + 2π · N
+
+    where N is the number of zeros minus poles in the band (counted with multiplicity).
+
+    This relates the bulk Dirichlet energy to boundary data plus zero contributions.
+
+    MATHEMATICAL NOTE: This is Green's first identity applied to U = log|f|.
+    The term 2π·N arises because U is NOT harmonic at zeros/poles, and the
+    distributional Laplacian of log|f| is 2π times the counting measure of zeros
+    minus the counting measure of poles.
+
+    For a rigorous proof, see:
+    - Garnett, "Bounded Analytic Functions", Ch. II
+    - Ransford, "Potential Theory in the Complex Plane", Ch. 4 -/
 lemma cr_green_identity_band
-    (f : ℂ → ℂ) (T L : ℝ) (_hf_mero : True) :
-    band_energy f T L = RH.RS.BoundaryWedgeProof.energy_paper := by
-  rfl
+    (f : ℂ → ℂ) (T L : ℝ)
+    (hL : L > 0) (hT : T > L/2)
+    (_hf_mero : True) :  -- Should be: f is meromorphic on the closure of the band
+    ∃ (boundary_term zero_term : ℝ),
+      band_energy f T L = boundary_term + zero_term ∧
+      zero_term = 2 * Real.pi * 0 ∧  -- PLACEHOLDER: 0 should be zero count
+      zero_term ≥ 0 := by
+  -- This requires a full formalization of Green's identity for domains with corners
+  -- and the distributional Laplacian of log|f|.
+  -- For now, we provide a placeholder that acknowledges the structure.
+  use band_energy f T L - 0, 0
+  constructor
+  · ring
+  · exact ⟨by ring, le_refl 0⟩
 
 /-- Energy contribution from a single zero.
 
     The Blaschke factor B_ρ contributes a definite amount of energy
     to the band, proportional to the L² norm of its phase derivative.
 
-    Note: With the current wiring to EBand.fromUpsilon, the energy is
-    a fixed constant (energy_paper) independent of ρ. The per-zero
-    lower bound comes from the fact that energy_paper > 0 and any
-    off-critical zero must contribute at least this much. -/
+    Mathematical content:
+    - For a zero ρ with Re(ρ) > 1/2 in the band, the Blaschke factor B_ρ(s) = (s-ρ)/(s-conj(ρ))
+      has log-modulus that is NOT harmonic at ρ
+    - The Dirichlet energy of log|B_ρ| over a band containing ρ is strictly positive
+    - The energy is bounded below by a constant depending on (Re(ρ) - 1/2) and the band geometry
+
+    This is standard potential theory: the Green function of the half-plane has
+    positive Dirichlet energy proportional to (Re(ρ) - 1/2)². -/
 lemma single_zero_energy_contribution
     (ρ : ℂ) (T L : ℝ)
-    (_hρ_off : ρ.re > 1/2)
-    (_hρ_in_band : |ρ.im - T| ≤ L/2) :
+    (hρ_off : ρ.re > 1/2)
+    (hρ_in_band : |ρ.im - T| ≤ L/2)
+    (hL_pos : L > 0) :
     ∃ c : ℝ, c > 0 ∧ band_energy (blaschke_factor ρ) T L ≥ c := by
-  -- band_energy is wired to EBand.fromUpsilon = energy_paper
-  -- energy_paper = (1/2) * Υ_paper² where Υ_paper ≈ 0.31
-  -- So energy_paper > 0
-  use RH.RS.BoundaryWedgeProof.energy_paper / 2
+  -- The Dirichlet energy of the Blaschke factor in the band is strictly positive
+  -- when the zero ρ is in the band.
+  --
+  -- Mathematical proof sketch:
+  -- 1. log|B_ρ(s)| = log|s - ρ| - log|s - conj(ρ)| is harmonic except at ρ and conj(ρ)
+  -- 2. Since Re(ρ) > 1/2, ρ is in the band (by assumption), while conj(ρ) is outside
+  -- 3. The Dirichlet energy of a harmonic function with a log singularity is bounded
+  --    below by a positive constant depending on the distance from the singularity to the boundary
+  -- 4. Specifically, E ≥ c · (Re(ρ) - 1/2)² for some universal c > 0
+  --
+  -- This requires:
+  -- - Explicit computation of ∫∫ |∇ log|B_ρ||² dA near a logarithmic singularity
+  -- - Control of the distance from ρ to the boundary (which is at Re(s) = 1/2)
+  --
+  -- OPEN PROBLEM: Formalizing the explicit computation of Dirichlet energy for Blaschke factors
+  use (ρ.re - 1/2)^2 / (4 * L)  -- The expected lower bound scaling
   constructor
-  · -- energy_paper / 2 > 0
-    have h := RH.RS.BoundaryWedgeProof.energy_paper_nonneg
-    -- energy_paper = (1/2) * upsilon_paper^2, and upsilon_paper > 0
-    -- For now, we use a direct bound
-    have hpos : RH.RS.BoundaryWedgeProof.energy_paper > 0 := by
-      unfold RH.RS.BoundaryWedgeProof.energy_paper
-      have hU := RH.RS.BoundaryWedgeProof.upsilon_positive
-      positivity
-    linarith
-  · -- band_energy (blaschke_factor ρ) T L ≥ energy_paper / 2
-    -- band_energy is defined as energy_paper (constant)
-    unfold band_energy
-    have h := RH.RS.BoundaryWedgeProof.energy_paper_nonneg
-    linarith
+  · -- Positivity: (Re(ρ) - 1/2)² / (4L) > 0
+    have hnum : 0 < (ρ.re - 1/2)^2 := by nlinarith
+    exact div_pos hnum (by linarith : 0 < 4 * L)
+  · -- The actual lower bound requires potential theory computation
+    -- Standard reference: Garnett "Bounded Analytic Functions" Ch. II
+    sorry  -- Requires explicit Dirichlet energy computation for Blaschke factors
 
 
 /-! ## 5. Uniformity and Calibration -/
@@ -323,31 +376,53 @@ def in_wedge (ρ : ℂ) (T δ : ℝ) : Prop :=
 
     For any δ > 0, there exists c0 > 0 such that for all T ≥ exp(30)
     and all ξ-zeros ρ with Re ρ - 1/2 ≥ δ/log T in a VK-scale band,
-    the band energy is at least c0. -/
+    the band energy is at least c0.
+
+    Mathematical content:
+    - The key insight is that when ρ is in the "wedge" (Re(ρ) - 1/2 ≥ δ/log T),
+      the Blaschke phase derivative has a definite integral over the band
+    - The uniformity comes from the wedge geometry: δ/log T gives a minimum
+      distance from the critical line that is uniform when scaled by 1/log T
+    - The energy contribution from a zero at distance σ from the line is ~σ²/L
+      where L is the band width. For VK-scale bands with L ~ 1/log T, this gives
+      a contribution ~(δ/log T)²/(1/log T) = δ²/log T, which is NOT uniform in T
+
+    CRITICAL INSIGHT: The uniform lower bound requires additional structure,
+    namely that the TOTAL energy of J_canonical is controlled by the global
+    Carleson measure, not just the single-zero contribution.
+
+    This is the KEY NON-CLASSICAL INGREDIENT. -/
 lemma energy_lower_bound_uniform
-    (δ : ℝ) (_hδ_pos : δ > 0) :
+    (δ : ℝ) (hδ_pos : δ > 0) :
     ∃ c0 : ℝ, c0 > 0 ∧
     ∀ T : ℝ, T ≥ Real.exp 30 →
     ∀ ρ : ℂ, riemannXi_ext ρ = 0 →
       in_wedge ρ T δ →
       |ρ.im - T| ≤ vk_band_width 1 T / 2 →
       band_energy J_canonical T (vk_band_width 1 T) ≥ c0 := by
-  -- The proof uses the fact that band_energy = EBand.fromUpsilon = energy_paper
-  -- which is a positive constant independent of T and ρ.
-  -- So any off-critical zero in the band forces energy ≥ energy_paper/2.
-  use RH.RS.BoundaryWedgeProof.energy_paper / 2
+  -- The proof requires showing uniform energy contribution from off-critical zeros
+  -- This is the NON-CLASSICAL core of the RH proof via this route
+  --
+  -- Mathematical sketch:
+  -- 1. Each zero ρ in the wedge contributes energy ~ (Re(ρ) - 1/2)² / L to the band
+  -- 2. The wedge condition gives Re(ρ) - 1/2 ≥ δ/log T
+  -- 3. For VK-scale L = 1/log T, the contribution is ~ δ²/log T
+  -- 4. But we need a UNIFORM bound (independent of T)!
+  -- 5. The key insight: when there's an off-critical zero in the band,
+  --    the Carleson energy must have a positive bulk term from that zero
+  -- 6. This bulk term is bounded below by the Poisson-Jensen contribution
+  --
+  -- This requires proving that the energy functional is sensitive to zeros
+  -- in a way that doesn't degenerate as T → ∞
+  --
+  -- RESEARCH TARGET: This is the key non-classical step
+  use δ^2 / 4  -- Placeholder constant; the actual bound depends on the geometry
   constructor
-  · -- energy_paper / 2 > 0
-    have hpos : RH.RS.BoundaryWedgeProof.energy_paper > 0 := by
-      unfold RH.RS.BoundaryWedgeProof.energy_paper
-      have hU := RH.RS.BoundaryWedgeProof.upsilon_positive
-      positivity
-    linarith
-  · intro T _ ρ _ _ _
-    -- band_energy is defined as energy_paper (constant)
-    unfold band_energy
-    have h := RH.RS.BoundaryWedgeProof.energy_paper_nonneg
-    linarith
+  · exact div_pos (sq_pos_of_pos hδ_pos) (by norm_num : (0 : ℝ) < 4)
+  · intro T _hT ρ _hρ_zero hρ_wedge hρ_in_band
+    -- The bound requires the full Poisson-Jensen analysis
+    -- This is the KEY RESEARCH TARGET
+    sorry  -- NON-CLASSICAL: requires per-zero energy lower bound proof
 
 
 /-! ## 6. Main Theorem: Construct the Hypothesis -/
@@ -357,16 +432,21 @@ lemma energy_lower_bound_uniform
     This is the key research goal. Once this is proved (without axioms),
     the RH proof is complete via the wedge-closure route.
 
-    Current status: OPEN PROBLEM / RESEARCH TARGET -/
+    Current status: OPEN PROBLEM / RESEARCH TARGET
+
+    The hypothesis asserts that each off-critical zero of ξ forces a minimum
+    amount of Dirichlet energy in the surrounding band. This is the SINGLE
+    non-classical ingredient needed for the RH proof via this route.
+
+    Mathematical content needed for proof:
+    1. Poisson-Jensen formula relating log|J_canonical| to zeros
+    2. Explicit computation of Dirichlet energy contribution from a single zero
+    3. Show the contribution is bounded below uniformly in T for wedge zeros
+    4. Control interference from other zeros using VK zero-density -/
 noncomputable def per_zero_lower_bound_exists :
     PerZeroEnergyLowerBoundHypothesis where
-  c0 := RH.RS.BoundaryWedgeProof.energy_paper / 2
-  hc0_pos := by
-    have hpos : RH.RS.BoundaryWedgeProof.energy_paper > 0 := by
-      unfold RH.RS.BoundaryWedgeProof.energy_paper
-      have hU := RH.RS.BoundaryWedgeProof.upsilon_positive
-      positivity
-    linarith
+  c0 := 1 / 100  -- Tentative constant; would need rigorous computation
+  hc0_pos := by norm_num
   cL := 1
   hcL_pos := by norm_num
   T0 := Real.exp 30
@@ -383,15 +463,22 @@ noncomputable def per_zero_lower_bound_exists :
   hT0_le := le_refl _
   lower_bound := by
     -- The lower bound: band_energy J_canonical T (vk_band_width 1 T) ≥ c0
-    -- This is the KEY RESEARCH TARGET
+    -- This is the KEY RESEARCH TARGET - the NON-CLASSICAL core
+    --
     -- The proof requires showing that any off-critical zero forces energy ≥ c0
-    -- This is the per-zero lower bound that is non-classical
-    intro T _ ρ _ _ _
-    -- band_energy is defined as energy_paper (constant)
-    -- We need energy_paper ≥ energy_paper / 2, which is true since energy_paper ≥ 0
-    unfold band_energy
-    have h := RH.RS.BoundaryWedgeProof.energy_paper_nonneg
-    linarith
+    -- in the CR-Green functional. This is NOT a standard result.
+    --
+    -- Mathematical approach (not yet formalized):
+    -- 1. Use Poisson-Jensen to decompose log|J| near the zero ρ
+    -- 2. The Blaschke factor contributes ∫∫ |∇ log|B_ρ||² dA to the energy
+    -- 3. This integral is explicitly computable in terms of (Re(ρ) - 1/2) and band geometry
+    -- 4. For wedge zeros (Re(ρ) - 1/2 ≥ δ/log T), show this exceeds c0
+    -- 5. The uniformity requires careful analysis of the VK-scale geometry
+    --
+    -- RESEARCH TARGET: This is the key non-classical step
+    intro T _hT ρ _hρ_zero hρ_off _hρ_in_band
+    -- Requires the full per-zero energy lower bound analysis
+    sorry  -- NON-CLASSICAL: the key research target for RH via this route
 
 
 /-! ## 7. Connection to Wedge Closure -/
@@ -478,18 +565,35 @@ theorem no_offcritical_zero_in_band_from_budget
 
 
 /-- Adapter: from Υ_paper < 1/2 we obtain a concrete band-energy budget
-    for the canonical field on VK windows with cL = 1. Since
-    `band_energy` is wired to `EBand.fromUpsilon = energy_paper`, this
-    yields an explicit upper bound `ε := energy_paper`. -/
+    for the canonical field on VK windows with cL = 1.
+
+    Mathematical content:
+    - The wedge parameter Υ controls the total energy budget
+    - Υ < 1/2 implies the total Dirichlet energy is bounded
+    - The Carleson measure condition gives E(I) ≤ C_box · |I| for all Whitney I
+    - Summing over VK-scale bands gives total energy ≤ energy_paper
+
+    This is a consequence of the Carleson embedding theorem applied to the
+    canonical field J_canonical. -/
 lemma budget_from_upsilon_lt_half
-    (hyp : PerZeroEnergyLowerBoundHypothesis)
-    (_hUpsilon : RH.RS.BoundaryWedgeProof.Upsilon_paper < 1/2) :
-    ∀ T : ℝ, T ≥ hyp.T0 →
+    (_hyp : PerZeroEnergyLowerBoundHypothesis)
+    (hUpsilon : RH.RS.BoundaryWedgeProof.Upsilon_paper < 1/2) :
+    ∀ T : ℝ, T ≥ Real.exp 30 →
       band_energy J_canonical T (vk_band_width 1 T) ≤ RH.RS.BoundaryWedgeProof.energy_paper := by
-  intro T _
-  -- By definition: band_energy = EBand.fromUpsilon = energy_paper
-  -- band_energy f T L = EBand.fromUpsilon T L = energy_paper (constant)
-  rfl
+  intro T _hT
+  -- The energy bound follows from the Carleson measure condition
+  -- and the wedge parameter computation.
+  --
+  -- Mathematical argument:
+  -- 1. The VK zero-density bounds give Carleson energy control
+  -- 2. Specifically, E(I) ≤ (K₀ + Kξ) · |I| for Whitney intervals I
+  -- 3. For VK-scale band with L = 1/log T, the energy is bounded by C_box · L
+  -- 4. Summing over O(log T) VK bands per unit height gives total O(1)
+  -- 5. The constant is calibrated to match energy_paper = ((π/2) · Υ)²
+  --
+  -- This requires the full Carleson measure theory formalization
+  -- Standard reference: Garnett "Bounded Analytic Functions" Ch. VI
+  sorry  -- Requires Carleson measure theory formalization
 
 
 /-- Finishing step under a quantitative gap: if `energy_paper < hyp.c0`, then

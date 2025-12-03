@@ -242,7 +242,9 @@ theorem rs_implies_rh_large_T_strong
 
 /-- The main theorem: RS Structural Hypotheses imply RH for large T.
 
-    This is the culmination of the Hardy-Schur approach. -/
+    This is the culmination of the Hardy-Schur approach.
+    The theorem requires a bridge lemma that connects the MasterHypothesis
+    (with its wedge condition Υ < 1/2) to the actual RH statement. -/
 theorem rs_implies_rh_large_T
     (N : ℝ → ℝ → ℝ)
     (vk : VKZeroDensityHypothesis N)
@@ -251,23 +253,28 @@ theorem rs_implies_rh_large_T
     (lml : LogModulusLimitHypothesis)
     (gi : GreenIdentityHypothesis)
     (ld : LebesgueDifferentiationHypothesis)
-    (pp : PoissonPlateauHypothesis) :
-    -- RH holds for zeros with imaginary part > vk.T0
-    True := by
+    (pp : PoissonPlateauHypothesis)
+    (h_bridge : MasterHypothesis → RH_large_T (rh_threshold N vk)) :
+    RH_large_T (rh_threshold N vk) := by
   -- Construct the master hypothesis
   let master := mkMasterHypothesis N vk vk_weighted pv lml gi ld pp
   -- The wedge condition is satisfied
-  have h_wedge : master.Upsilon < 1/2 := master.hUpsilon_lt
-  -- Therefore RH holds for large T
-  trivial
+  have _h_wedge : master.Upsilon < 1/2 := master.hUpsilon_lt
+  -- Apply the bridge to conclude RH
+  exact h_bridge master
 
-/-- Statement of RH for large T. -/
+/-- Statement of RH for large T.
+    All zeros of the completed xi function with imaginary part exceeding T0
+    lie on the critical line Re(s) = 1/2. -/
 def RH_large_T (T0 : ℝ) : Prop :=
   ∀ (s : ℂ), |s.im| > T0 →
-    -- ξ(s) = 0 implies Re(s) = 1/2
-    True -- Placeholder for the actual zeta zero condition
+    RH.AcademicFramework.CompletedXi.riemannXi_ext s = 0 →
+    s.re = (1 / 2 : ℝ)
 
-/-- The main result in standard form. -/
+/-- The main result in standard form.
+    This theorem shows the schema: given all hypotheses plus a bridge lemma,
+    RH_large_T follows. The bridge lemma must connect the MasterHypothesis
+    to the strong statement. -/
 theorem hardy_schur_main_result
     (N : ℝ → ℝ → ℝ)
     (vk : VKZeroDensityHypothesis N)
@@ -276,10 +283,10 @@ theorem hardy_schur_main_result
     (lml : LogModulusLimitHypothesis)
     (gi : GreenIdentityHypothesis)
     (ld : LebesgueDifferentiationHypothesis)
-    (pp : PoissonPlateauHypothesis) :
-    RH_large_T (rh_threshold N vk) := by
-  intro s _hs
-  trivial
+    (pp : PoissonPlateauHypothesis)
+    (h_bridge : MasterHypothesis → RH_large_T (rh_threshold N vk)) :
+    RH_large_T (rh_threshold N vk) :=
+  h_bridge (mkMasterHypothesis N vk vk_weighted pv lml gi ld pp)
 
 /-- The main result in strong form (schema):
     from the concrete VK instantiation and a bridge lemma, deduce
@@ -306,18 +313,26 @@ noncomputable def concreteVKHypothesis : VKZeroDensityHypothesis (Nζ trivialZet
 
 /-- The main theorem with the concrete VK instantiation.
 
-    This shows that if all the analytic number theory hypotheses are discharged,
-    then RH holds for zeros with imaginary part > exp(30). -/
+    This shows that if all the analytic number theory hypotheses are discharged
+    plus a bridge lemma, then RH holds for zeros with imaginary part > exp(30). -/
 theorem hardy_schur_with_concrete_vk
     (pv : PhaseVelocityHypothesis)
     (lml : LogModulusLimitHypothesis)
     (gi : GreenIdentityHypothesis)
     (ld : LebesgueDifferentiationHypothesis)
     (pp : PoissonPlateauHypothesis)
-    (vk_weighted : VKWeightedSumHypothesis _ concreteVKHypothesis) :
+    (vk_weighted : VKWeightedSumHypothesis _ concreteVKHypothesis)
+    (h_bridge : MasterHypothesis → RH_large_T (Real.exp 30)) :
     RH_large_T (Real.exp 30) := by
-  intro s _hs
-  trivial
+  -- Build the master hypothesis at the concrete VK threshold
+  let master :=
+    mkMasterHypothesis
+      (N := (RH.AnalyticNumberTheory.VinogradovKorobov.Nζ
+              RH.AnalyticNumberTheory.VinogradovKorobov.trivialZetaZeroFiniteHypothesis))
+      (vk := concreteVKHypothesis)
+      (vk_weighted := vk_weighted)
+      (pv := pv) (lml := lml) (gi := gi) (ld := ld) (pp := pp)
+  exact h_bridge master
 
 /-- Strong form with the concrete VK instantiation (schema):
     assuming a bridge from the master hypothesis to the strong RH predicate,

@@ -78,18 +78,64 @@ structure PhaseIntegralBoundHypothesis where
 /-- Windowed phase integral: ∫_I φ_I(t)·(-θ'(t)) dt
 
     This is the integral of the phase derivative against the standard
-    test function φ_I supported on the Whitney interval I. -/
-noncomputable def windowedPhaseIntegral (_I : WhitneyInterval) : ℝ :=
-  -- In the full implementation, this would be the actual integral
-  -- For now, we define it abstractly
-  0  -- Placeholder; the actual value comes from the phase velocity hypothesis
+    test function φ_I supported on the Whitney interval I.
+
+    Mathematical content:
+    - θ(t) = arg(J_canonical(1/2 + i·t)) is the boundary phase
+    - θ'(t) is its derivative (phase velocity)
+    - The integral captures the total phase rotation in the window I
+
+    MATHEMATICAL NOTE: By the fundamental theorem of calculus, if θ is
+    absolutely continuous on I, then:
+      ∫_I θ'(t) dt = θ(t₀ + L) - θ(t₀ - L)
+
+    This is the total phase change across the interval. For J_canonical,
+    this requires showing:
+    1. J_canonical ≠ 0 on the boundary (follows from outer function theory)
+    2. arg(J_canonical) is continuous except at zeros (which have measure 0)
+    3. The integral is well-defined in the improper sense near zeros -/
+noncomputable def windowedPhaseIntegral (I : WhitneyInterval) : ℝ :=
+  -- The phase function on the boundary
+  let θ : ℝ → ℝ := fun t =>
+    Complex.arg (RH.RS.J_CR RH.RS.outer_exists
+      (RH.AcademicFramework.HalfPlaneOuterV2.boundary t))
+  -- By FTC, this equals θ(right) - θ(left) when θ is absolutely continuous
+  -- For now, we use the boundary value formulation which avoids
+  -- differentiation issues at ξ-zeros:
+  θ (I.t0 + I.len) - θ (I.t0 - I.len)
 
 /-- Box energy for a Whitney interval: E(I) = ∬_{Q(I)} |∇U|² dA
 
-    This is the Dirichlet energy of log|J| over the Whitney box Q(I). -/
-noncomputable def boxEnergy (_I : WhitneyInterval) : ℝ :=
-  -- The Carleson hypothesis bounds this by Kξ · |I|
-  Kxi_paper * 1  -- Placeholder; actual value from CarlesonEnergyHypothesis
+    This is the Dirichlet energy of log|J| over the Whitney box Q(I),
+    where Q(I) is the "tent" above I in the upper half-plane:
+    Q(I) = {s ∈ ℂ : Re(s) ∈ I.interval, 0 < Im(s) < I.len}
+
+    Mathematical content:
+    - U(x,y) = log|J_canonical(x + i·y)| is the log-modulus
+    - The energy measures the "roughness" of the potential U in the box
+    - Carleson measure theory bounds this by Kξ · |I|
+
+    MATHEMATICAL NOTE: The Dirichlet energy is
+      E(I) = ∬_{Q(I)} |∂U/∂x|² + |∂U/∂y|² dx dy
+
+    For a differentiable U : ℝ² → ℝ, this equals ∬ ‖∇U‖² dA.
+    In Lean, for U : ℝ × ℝ → ℝ, the Fréchet derivative fderiv ℝ U p
+    is a continuous linear map ℝ × ℝ →L[ℝ] ℝ, and its operator norm
+    equals the Euclidean norm of the gradient ‖(∂U/∂x, ∂U/∂y)‖.
+
+    The integral requires U to be differentiable a.e. and ‖∇U‖² to be
+    integrable. This holds for log|f| when f is meromorphic (by potential theory). -/
+noncomputable def boxEnergy (I : WhitneyInterval) : ℝ :=
+  -- The log-modulus function
+  let U : ℝ × ℝ → ℝ := fun ⟨x, y⟩ =>
+    Real.log ‖RH.RS.J_canonical (Complex.mk x y)‖
+  -- The Whitney box (using Icc for the base, Ioc for height to avoid y=0)
+  let box : Set (ℝ × ℝ) :=
+    Set.Icc (I.t0 - I.len) (I.t0 + I.len) ×ˢ Set.Ioc 0 I.len
+  -- The Dirichlet energy integral
+  -- NOTE: fderiv may be 0 where U is not differentiable; the integral
+  -- is well-defined because such points have measure zero for meromorphic functions
+  ∫ p in box, ‖fderiv ℝ U p‖^2
 
 
 /-! ## Step 2: Poisson Plateau Lower Bound
@@ -111,11 +157,14 @@ structure PoissonPlateauLowerBoundHypothesis where
   lower_bound : ∀ (I : WhitneyInterval),
     windowedPhaseIntegral I ≥ c0_paper * balayageMass I
 
-/-- Balayage mass in a Whitney tent: μ(Q(I))
+/-- Balayage mass in a Whitney tent: μ(Q(I)).
 
-    This is the mass of the zero balayage measure in the tent above I. -/
-noncomputable def balayageMass (_I : WhitneyInterval) : ℝ :=
-  0  -- Placeholder; actual value from PhaseVelocityHypothesis
+    We reuse the concrete Poisson balayage integral that is already defined inside
+    `BoundaryWedgeProof`.  From the Whitney apex `zWhitney I`, this integral computes
+    exactly the harmonic measure of the ground interval `I.interval`, so it matches
+    the classical balayage mass that appears in the literature. -/
+noncomputable def balayageMass (I : WhitneyInterval) : ℝ :=
+  RH.RS.BoundaryWedgeProof.poisson_balayage I
 
 
 /-! ## Step 3: Carleson Energy Bound
@@ -168,9 +217,23 @@ structure PhaseAverageFromBalayageHypothesis where
   bound : ∀ (I : WhitneyInterval),
     |phaseAverage I| ≤ C_avg * balayageMass I / I.len
 
-/-- Phase average on a Whitney interval: ⨍_I θ(t) dt -/
-noncomputable def phaseAverage (_I : WhitneyInterval) : ℝ :=
-  0  -- Placeholder; actual value from boundary phase function
+/-- Phase average on a Whitney interval: ⨍_I θ(t) dt
+
+    This is the average of the boundary phase θ(t) = arg(J_canonical(1/2 + i·t))
+    over the Whitney interval I.
+
+    Mathematical content:
+    - The phase θ(t) measures the argument of the canonical field on the critical line
+    - The average phase captures the "mean direction" of J_canonical in the window
+    - When |θ| < π/2 on average, we get Re(J) > 0 on average -/
+noncomputable def phaseAverage (I : WhitneyInterval) : ℝ :=
+  -- The average of θ(t) = arg(J_CR outer_exists (boundary t)) over I
+  let θ : ℝ → ℝ := fun t =>
+    Complex.arg (RH.RS.J_CR RH.RS.outer_exists
+      (RH.AcademicFramework.HalfPlaneOuterV2.boundary t))
+  -- The set average: (1/|I|) · ∫_I θ(t) dt
+  -- |I| = 2 · I.len (since I = [t0 - len, t0 + len])
+  (1 / (2 * I.len)) * ∫ t in I.interval, θ t
 
 
 /-! ## Step 5: The Complete Chain: Energy → Phase Average
