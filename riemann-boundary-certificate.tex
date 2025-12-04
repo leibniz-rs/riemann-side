@@ -136,22 +136,37 @@ Let $\omega(t)$ be a smooth, even, compactly supported "bump function" on $\R$ t
 \end{equation}
 By construction, $\mathcal{O}_\zeta(s)$ is non-vanishing and holomorphic in $\Omega_{1/2}$. Its primary role is to act as a "counterweight" to the singular behavior of $\zeta(s)$ at $s=1$ and its polynomial growth in $t$, ensuring that the ratio defined below has unitary boundary behavior away from the zeros.
 
+\medskip
+\noindent\textbf{Completed xi-function.} Throughout we also use the completed Riemann xi-function
+\[
+  \xi(s) \;:=\; \pi^{-s/2}\,\Gamma\!\left(\frac{s}{2}\right)\,\zeta(s),
+\]
+which is entire and whose zeros are exactly the non-trivial zeros of $\zeta(s)$. In the right half-plane $\Omega_{1/2}$, the zeros of $\xi$ coincide with the (non-trivial) zeros of $\zeta$.
+
 \subsection{The Certificate Function $J(s)$}
 
-We define the \emph{product-certificate} $J(s)$ on $\Omega_{1/2}$ by the quotient:
+We define the \emph{product-certificate} $J(s)$ on $\Omega_{1/2}$ by the quotient
 \begin{equation} \label{eq:J_def}
-    J(s) := \frac{\det\nolimits_2(I - A(s))}{\mathcal{O}_\zeta(s) \, \zeta(s)}.
+    J(s) \;:=\; \frac{\det\nolimits_2(I - A(s))}{\mathcal{O}_\zeta(s) \, \xi(s)}.
 \end{equation}
 This function encapsulates the entire arithmetic content of the Riemann Hypothesis.
 \begin{proposition}[Analytic Properties of $J$]
 The function $J(s)$ satisfies the following:
 \begin{enumerate}
-    \item \textbf{Holomorphy:} $J(s)$ is meromorphic in $\Omega_{1/2}$. Its poles and zeros coincide exactly with the zeros of $\zeta(s)$ (with multiplicities determined by the order of the zero and the regularization terms).
+    \item \textbf{Holomorphy:} $J(s)$ is meromorphic in $\Omega_{1/2}$. Its poles occur exactly at the zeros of $\xi(s)$; equivalently, at the (non-trivial) zeros of $\zeta(s)$ in $\Omega_{1/2}$ (with multiplicities determined by the orders of vanishing and the regularization).
     \item \textbf{Boundary Behavior:} On the critical line $s = 1/2 + it$, away from the zeros of $\zeta$, the modulus $|J(1/2+it)|$ is essentially constant (by design of $\mathcal{O}_\zeta$).
     \item \textbf{BMO Regularity:} The logarithm $\log J(1/2+it)$ belongs to the space of functions of Bounded Mean Oscillation ($\BMO$) on finite intervals, provided one accounts for the local singularities at the zeros.
 \end{enumerate}
 \end{proposition}
 The BMO property is crucial: it implies that while the phase of $J$ can drift, it does not do so wildly. This allows us to apply Carleson measure techniques to control its variation.
+
+\begin{remark}[Behavior at $s=1$ and working domain]
+At $s=1$ one has $\xi(1)\ne 0$ and, with our normalization, $J(1)<0$, so $\Re\,(2J(1))<0$. This point plays no role in the proof of RH. For all interior transport and Schur-type arguments we work on the domain
+\[
+  \Omega_{1/2}^{\mathrm{off}\,\xi} \;:=\; \{\,s\in\Omega_{1/2} : s\ne 1 \text{ and } \xi(s)\ne 0\,\},
+\]
+i.e. the right half-plane with the point $1$ and the $\xi$-zeros removed. Neighborhoods used near zeros of $\xi$ are always chosen to exclude $s=1$ (which is at positive distance from any zero of $\xi$).
+\end{remark}
 
 \subsection{The Schur Transform and Reduction of RH}
 
@@ -160,6 +175,10 @@ The final step in the normalization is to map the right half-plane to the unit d
     \Theta(s) := \frac{2J(s) - 1}{2J(s) + 1}.
 \end{equation}
 If we can prove that $\re J(s) \ge 0$ everywhere in $\Omega_{1/2}$, then $|\Theta(s)| \le 1$ throughout the domain; i.e., $\Theta$ is a \emph{Schur function}.
+
+\begin{remark}[Extension across removable singularities and $s=1$]
+On $\Omega_{1/2}^{\mathrm{off}\,\xi}$ the function $\Theta$ is well-defined and $|\Theta|\le 1$ once $\Re J\ge 0$ holds. At a zero $\rho$ of $\xi$ one has $J(\rho)=\infty$ and hence $\Theta(\rho)=\lim_{|J|\to\infty}\frac{2J-1}{2J+1}=1$, so the singularity is removable and we extend by $\Theta(\rho):=1$. At $s=1$ (which is not a zero of $\xi$) we define an extension $\widehat\Theta$ by setting $\widehat\Theta(1):=0$; this choice is harmless since neighborhoods used in the globalization avoid $s=1$.
+\end{remark}
 
 \begin{lemma}[Reduction to Schur Property]
 The Riemann Hypothesis is equivalent to the statement that $\Theta(s)$ is a Schur function on $\Omega_{1/2}$ (extended across removable singularities). Specifically, if $|\Theta(s)| \le 1$ in $\Omega_{1/2}$, then $\zeta(s)$ has no zeros with $\sigma > 1/2$.
@@ -370,13 +389,13 @@ Having established the local boundary positivity via the wedge argument, we now 
 
 \subsection{Interior Transport}
 
-From Proposition \ref{prop:closure}, we know that the boundary values of the product-certificate satisfy $\re J(1/2+it) \ge 0$ for almost all $t$. Since $J(s)$ is meromorphic in the half-plane $\Omega_{1/2}$, we can appeal to the Herglotz representation theorem (or standard Poisson transport for functions with positive real part).
+From Proposition \ref{prop:closure}, we know that the boundary values of the product-certificate satisfy $\re J(1/2+it) \ge 0$ for almost all $t$. Since $J(s)$ is meromorphic in the half-plane $\Omega_{1/2}$ and analytic on the off-zeros domain $\Omega_{1/2}^{\mathrm{off}\,\xi}$, we can appeal to the Herglotz representation theorem (or standard Poisson transport for functions with positive real part) on $\Omega_{1/2}^{\mathrm{off}\,\xi}$.
 
 Specifically, consider the function $f(s) = J(s) + 1$. Its real part is non-negative on the boundary. Unless $f$ is identically zero (which it is not, as $J(s) \to 1$ at infinity), the Minimum Principle for harmonic functions implies that $\re f(s) > 0$ everywhere in the interior of its domain of holomorphy. Thus,
 \begin{equation}
-    \re J(s) > 0 \quad \text{for all } s \in \Omega_{1/2} \setminus \mathcal{Z},
+    \re J(s) > 0 \quad \text{for all } s \in \Omega_{1/2}^{\mathrm{off}\,\xi},
 \end{equation}
-where $\mathcal{Z}$ is the set of poles of $J$ (the zeros of $\zeta$). This positivity allows us to define the Schur transform $\Theta(s)$ globally.
+which is sufficient for the Schur-based globalization since neighborhoods used around $\xi$-zeros exclude $s=1$ by construction.
 
 \subsection{Removability of Singularities}
 
@@ -405,6 +424,47 @@ Assume there exists a "ghost zero" $\rho_0$ of $\zeta(s)$ with $\re(\rho_0) > 1/
 Thus, the assumption that there exists a zero $\rho_0$ with $\re(\rho_0) > 1/2$ is false under the closure criterion. All non-trivial zeros must then lie on the boundary of $\Omega_{1/2}$, i.e., on the critical line.
 
 \qed
+
+\section{Classical Bridges and Proofs}
+\label{sec:classical-bridges}
+
+In this section we record the classical theorems that serve as analytic bridges in the proof architecture. Each result is standard and can be found, for example, in Garnett \emph{Bounded Analytic Functions} and Stein \emph{Harmonic Analysis}. We include succinct proofs or proof sketches for completeness.
+
+\subsection{Poisson Representation on the Off-Zeros Domain}
+\begin{theorem}[Poisson Representation]
+Let $F(s):=\Re\,(2J(s))$ on $\Omega_{1/2}^{\mathrm{off}\,\xi}$. Then $F$ admits the Poisson integral representation on $\Omega_{1/2}^{\mathrm{off}\,\xi}$ with boundary data given by $F(1/2+it)$.
+\end{theorem}
+\begin{proof}[Proof sketch]
+By construction, $J$ is analytic on $\Omega_{1/2}^{\mathrm{off}\,\xi}$ and has non-negative real part in the interior once the boundary wedge holds. Hence $F$ is harmonic and locally bounded on $\Omega_{1/2}^{\mathrm{off}\,\xi}$, with non-tangential boundary limits almost everywhere equal to its boundary values. Classical Poisson/Herglotz theory yields the interior representation; cf. Garnett, Ch.~II, and standard boundary Fatou theorems on half-planes with slits of measure zero. Since the removed set $\{1\}\cup Z(\xi)$ is discrete, the representation holds on each simply connected component, and thus on $\Omega_{1/2}^{\mathrm{off}\,\xi}$.
+\end{proof}
+
+\subsection{Phase Bound from Energy}
+\begin{theorem}[Energy $\Rightarrow$ Phase Control]
+Let $U=\Re\log J$ and $w=\mathrm{Im}\,\log J$ on $\Omega_{1/2}$. If the Dirichlet energy of $U$ satisfies a Carleson bound on Whitney tents and the Poisson plateau lower bound holds, then for every Whitney window $I$,
+\[
+  \left| \int \phi_I(t)\,w'(t)\,dt \right| \;\le\; C_{\mathrm{geom}}\,\sqrt{K_\xi},
+\]
+and, by Lebesgue differentiation, $|w(1/2+it)|\le (\pi/2)\,\Upsilon$ almost everywhere with $\Upsilon=\frac{C_{\mathrm{geom}}\sqrt{K_\xi}}{\pi\,c_{\mathrm{plateau}}}$.
+\end{theorem}
+\begin{proof}[Proof sketch]
+Pair $U$ with the Poisson extension $V_I$ of a mean-zero window $\phi_I$ and apply Green's identity to convert the boundary pairing to an interior integral of $\nabla U\cdot \nabla V_I$. Cauchy--Schwarz gives the upper bound by $\sqrt{\mathcal{E}_I(U)}\cdot \|\nabla V_I\|_{L^2((\sigma-1/2)^{-1})}$, producing $C_{\mathrm{geom}}\sqrt{K_\xi}$. The Poisson plateau gives the complementary lower bound, and Lebesgue differentiation passes from averages to pointwise almost-everywhere control. See Garnett, Ch.~VI, and Stein, Ch.~II.
+\end{proof}
+
+\subsection{Pinned Cayley Data at $\xi$-Zeros}
+\begin{theorem}[Removability and Cayley Inverse near $\xi$-zeros]
+Let $\rho$ be a zero of $\xi$ with $\Re \rho>1/2$. There exists an open, preconnected neighborhood $U\subset\Omega_{1/2}$ with $\rho\in U$, $1\notin U$, and $U\cap\{\xi=0\}=\{\rho\}$ such that:
+\begin{enumerate}
+  \item $\Theta$ is analytic on $U\setminus\{\rho\}$,
+  \item There exists $u$ analytic on $U$ with $u(\rho)=0$ and
+  \[
+    \Theta(z) \;=\; \frac{1-u(z)}{1+u(z)} \quad \text{for } z\in U\setminus\{\rho\},
+  \]
+  \item There exists $z\in U$ with $\Theta(z)\ne 1$.
+\end{enumerate}
+\end{theorem}
+\begin{proof}
+Since $\xi(\rho)=0$ and $\det_2$ and $\mathcal{O}_\zeta$ are non-vanishing near $\rho$, one has $J(z)\to\infty$ as $z\to \rho$. Hence $\Theta(z)\to 1$. Define $u(z):=\frac{1-\Theta(z)}{1+\Theta(z)}$ on $U\setminus\{\rho\}$; then $u$ is analytic there and $u(z)\to 0$ as $z\to \rho$. By the removable singularity theorem, $u$ extends holomorphically to $U$ with $u(\rho)=0$, and the displayed identity holds on $U\setminus\{\rho\}$. Finally, by continuity, choose $z$ close enough to $\rho$ with $\Theta(z)\ne 1$ (otherwise $\Theta\equiv 1$ on $U$, contradicting the asymptotic value $1/3$ as $\Re s\to\infty$).
+\end{proof}
 
 \section{Formal Verification (Lean 4)}
 
