@@ -40,6 +40,21 @@ import Riemann.RS.BWP.Laplacian
 import Riemann.RS.BWP.CRCalculus
 --import Riemann.RS.BWP.DiagonalBounds
 
+-- Active BWP pipeline files (added to top-level build)
+import Riemann.RS.BWP.PhaseVelocityHypothesis
+import Riemann.RS.BWP.WedgeHypotheses
+import Riemann.RS.BWP.ZeroDensity
+import Riemann.RS.VKStandalone
+import Riemann.AnalyticNumberTheory.VinogradovKorobov
+-- EnergyToPPlus commented out: transitively imports DiagonalBounds which has errors.
+-- FinalIntegration uses axioms instead for the energy→phase chain.
+-- import Riemann.RS.BWP.EnergyToPPlus
+import Riemann.RS.BWP.FinalIntegration
+-- These import FinalIntegration transitively, so should be safe:
+import Riemann.RS.BWP.PerZeroLowerBound
+import Riemann.RS.BWP.RHFromAxiomsAndPerZero
+import Riemann.RS.ClassicalAxioms
+
 import Riemann.Mathlib.Analysis.Calculus.TaylorIntegral
 import Riemann.Mathlib.Analysis.SpecialFunctions.Gaussian.GaussianIntegral
 import Riemann.Mathlib.ArctanTwoGtOnePointOne

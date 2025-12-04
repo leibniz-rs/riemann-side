@@ -151,9 +151,10 @@ This function encapsulates the entire arithmetic content of the Riemann Hypothes
 \begin{proposition}[Analytic Properties of $J$]
 The function $J(s)$ satisfies the following:
 \begin{enumerate}
-    \item \textbf{Holomorphy:} $J(s)$ is meromorphic in $\Omega_{1/2}$. Its poles occur exactly at the zeros of $\xi(s)$; equivalently, at the (non-trivial) zeros of $\zeta(s)$ in $\Omega_{1/2}$ (with multiplicities determined by the orders of vanishing and the regularization).
-    \item \textbf{Boundary Behavior:} On the critical line $s = 1/2 + it$, away from the zeros of $\zeta$, the modulus $|J(1/2+it)|$ is essentially constant (by design of $\mathcal{O}_\zeta$).
+    \item \textbf{Holomorphy:} $J(s)$ is meromorphic in $\Omega_{1/2}$. Its poles occur exactly at the zeros of $\xi(s)$ (equivalently, the non-trivial zeros of $\zeta(s)$); the point $s=1$ is regular since $\xi(1)\ne 0$ and $\mathcal{O}_\zeta(1)\ne 0$.
+    \item \textbf{Boundary Behavior:} On the critical line $s = 1/2 + it$, away from the zeros of $\xi$, the modulus $|J(1/2+it)|$ is essentially constant (by design of $\mathcal{O}_\zeta$).
     \item \textbf{BMO Regularity:} The logarithm $\log J(1/2+it)$ belongs to the space of functions of Bounded Mean Oscillation ($\BMO$) on finite intervals, provided one accounts for the local singularities at the zeros.
+    \item \textbf{Asymptotics:} As $\sigma\to\infty$, one has $\det_2(I-A(s))\to 1$. By normalization of the outer factor for the ratio $\det_2/\xi$, the quotient $J(s)=\det_2/( \mathcal{O}_\zeta\,\xi)$ tends to $1$, hence $\Theta(\sigma+it)\to \tfrac13$.
 \end{enumerate}
 \end{proposition}
 The BMO property is crucial: it implies that while the phase of $J$ can drift, it does not do so wildly. This allows us to apply Carleson measure techniques to control its variation.
@@ -172,23 +173,23 @@ The final step in the normalization is to map the right half-plane to the unit d
 \begin{equation} \label{eq:Theta_def}
     \Theta(s) := \frac{2J(s) - 1}{2J(s) + 1}.
 \end{equation}
-If we can prove that $\re J(s) \ge 0$ everywhere in $\Omega_{1/2}$, then $|\Theta(s)| \le 1$ throughout the domain; i.e., $\Theta$ is a \emph{Schur function}.
+If we can prove that $\re J(s) \ge 0$ on $\Omega_{1/2}^{\mathrm{off}\,\xi}$, then $|\Theta(s)| \le 1$ on $\Omega_{1/2}^{\mathrm{off}\,\xi}$; by removability at $\xi$-zeros (where $\Theta\to 1$), $\Theta$ extends to a Schur function on all of $\Omega_{1/2}$.
 
 \begin{remark}[Extension across removable singularities and $s=1$]
-On $\Omega_{1/2}^{\mathrm{off}\,\xi}$ the function $\Theta$ is well-defined and $|\Theta|\le 1$ once $\Re J\ge 0$ holds. At a zero $\rho$ of $\xi$ one has $J(\rho)=\infty$ and hence $\Theta(\rho)=\lim_{|J|\to\infty}\frac{2J-1}{2J+1}=1$, so the singularity is removable and we extend by $\Theta(\rho):=1$. At $s=1$ (which is not a zero of $\xi$) we define an extension $\widehat\Theta$ by setting $\widehat\Theta(1):=0$; this choice is harmless since neighborhoods used in the globalization avoid $s=1$.
+On $\Omega_{1/2}^{\mathrm{off}\,\xi}$ the function $\Theta$ is well-defined and $|\Theta|\le 1$ once $\Re J\ge 0$ holds. At a zero $\rho$ of $\xi$ one has $J(\rho)=\infty$ and hence $\Theta(\rho)=\lim_{|J|\to\infty}\frac{2J-1}{2J+1}=1$, so the singularity is removable and we extend by $\Theta(\rho):=1$. At $s=1$ (which is not a zero of $\xi$) $\Theta$ is already defined since $J(1)$ is finite; this point is harmless since neighborhoods used in the globalization avoid $s=1$.
 \end{remark}
 
 \begin{lemma}[Reduction to Schur Property]
 The Riemann Hypothesis is equivalent to the statement that $\Theta(s)$ is a Schur function on $\Omega_{1/2}$ (extended across removable singularities). Specifically, if $|\Theta(s)| \le 1$ in $\Omega_{1/2}$, then $\zeta(s)$ has no zeros with $\sigma > 1/2$.
 \end{lemma}
 \begin{proof}
-Suppose $\zeta(\rho) = 0$ for some $\rho$ with $\re(\rho) > 1/2$. From \eqref{eq:J_def}, at a zero of $\zeta$ the factor $1/\zeta$ blows up, so $J(\rho) = \infty$, hence $\Theta(\rho) = 1$. On the other hand, as $\sigma \to \infty$ we have $A(s)\to 0$, so $\det_2(I-A(s)) \to 1$ and $\zeta(s)\to 1$; by normalization $\mathcal{O}_\zeta(s)\to 1$, hence $J(s)\to 1$ and
+Suppose $\xi(\rho) = 0$ (equivalently, $\zeta(\rho)=0$ with $\rho\ne 1$) for some $\rho$ with $\re(\rho) > 1/2$. From \eqref{eq:J_def}, at a zero of $\xi$ the factor $1/\xi$ blows up, so $J(\rho) = \infty$, hence $\Theta(\rho) = 1$. On the other hand, as $\sigma \to \infty$ we have $A(s)\to 0$, so $\det_2(I-A(s)) \to 1$; by construction of the outer factor for the ratio $\det_2/\xi$, one has $J(s)\to 1$ and
 \[
     \Theta(\sigma+it) \to \frac{2\cdot 1 - 1}{2\cdot 1 + 1} = \frac{1}{3}.
 \]
 If $\Theta$ is Schur and attains modulus $1$ at an interior point, the Maximum Modulus Principle forces $\Theta$ to be a unimodular constant, contradicting the limit $1/3$ at infinity. Thus no such $\rho$ can exist.
 \end{proof}
-Consequently, our task is reduced to proving the non-negativity of the real part of $J$ (or equivalently, the Schur property of $\Theta$). The strategy is to establish this on the boundary $s=1/2+it$ and propagate it inward.
+Consequently, our task is reduced to proving the non-negativity of the real part of $J$ on $\Omega_{1/2}^{\mathrm{off}\,\xi}$ (or equivalently, the Schur property of $\Theta$ after removable extension). The strategy is to establish this on the boundary $s=1/2+it$ almost everywhere and propagate it inward on the off-zeros domain.
 
 \section{Analytic Number Theory Inputs (The Engine)}
 
@@ -424,7 +425,7 @@ Having established the local boundary positivity via the wedge argument, we now 
 
 From Proposition \ref{prop:closure}, we know that the boundary values of the product-certificate satisfy $\re J(1/2+it) \ge 0$ for almost all $t$. Since $J(s)$ is meromorphic in the half-plane $\Omega_{1/2}$ and analytic on the off-zeros domain $\Omega_{1/2}^{\mathrm{off}\,\xi}$, we can appeal to the Herglotz representation theorem (or standard Poisson transport for functions with positive real part) on $\Omega_{1/2}^{\mathrm{off}\,\xi}$.
 
-Specifically, consider the function $f(s) = J(s) + 1$. Its real part is non-negative on the boundary. Unless $f$ is identically zero (which it is not, as $J(s) \to 1$ at infinity), the Minimum Principle for harmonic functions implies that $\re f(s) > 0$ everywhere in the interior of its domain of holomorphy. Thus,
+Specifically, consider the function $f(s) = J(s) + 1$. Its real part is non-negative on the boundary. Unless $f$ is identically zero (which it is not, as $J(s) \to 1$ at infinity by Proposition 2.3(iv)), the Minimum Principle for harmonic functions implies that $\re f(s) > 0$ everywhere in the interior of its domain of holomorphy. Thus,
 \begin{equation}
     \re J(s) > 0 \quad \text{for all } s \in \Omega_{1/2}^{\mathrm{off}\,\xi},
 \end{equation}
@@ -437,11 +438,11 @@ Recall the definition of the Cayley transform:
     \Theta(s) = \frac{2J(s) - 1}{2J(s) + 1}.
 \]
 The singularities of $\Theta$ potentially occur where $J(s) = -1/2$ (which is impossible since $\re J \ge 0$) or where $J(s)$ has a pole.
-The poles of $J(s)$ occur precisely at the zeros of $\zeta(s)$. Let $\rho$ be such a zero. Near $\rho$, we have $|J(s)| \to \infty$. Consequently,
+The poles of $J(s)$ occur precisely at the zeros of $\xi(s)$. Let $\rho$ be such a zero with $\re(\rho)>1/2$. Near $\rho$, we have $|J(s)| \to \infty$. Consequently,
 \[
     \lim_{s \to \rho} \Theta(s) = \lim_{|J| \to \infty} \frac{2J - 1}{2J + 1} = 1.
 \]
-Since $\Theta(s)$ is bounded by 1 in modulus (because $\re J \ge 0$), the singularities at $\rho$ are removable. We extend $\Theta$ to be holomorphic on the entire half-plane $\Omega_{1/2}$ by setting $\Theta(\rho) = 1$ for every zero $\rho$.
+Since $\Theta(s)$ is bounded by 1 in modulus (because $\re J \ge 0$), the singularities at $\rho$ are removable. We extend $\Theta$ to be holomorphic on the entire half-plane $\Omega_{1/2}$ by setting $\Theta(\rho) = 1$ for every $\xi$-zero $\rho$. The point $s=1$ is regular for both $J$ and $\Theta$ and plays no role.
 
 \subsection{The Pinch Argument}
 
