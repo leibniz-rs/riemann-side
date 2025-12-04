@@ -297,37 +297,6 @@ lemma integrable_boundedBoundary
            mul_comm, mul_left_comm, mul_assoc] using hmul
   exact this
 
-/-! ### Poisson kernel total mass -/
-
-/-- The Poisson kernel integrates to 1 over ℝ for any z ∈ Ω.
-
-This is the fundamental normalization property: ∫_{-∞}^{∞} P(z,t) dt = 1.
-
-Proof strategy:
-1. ∫ (1/π) · a/(a² + (t-b)²) dt
-2. = (1/π) · a · ∫ 1/(a² + (t-b)²) dt   (factor out constants)
-3. = (1/π) · a · ∫ 1/(a² + s²) ds        (translation: s = t-b)
-4. = (1/π) · a · (π/a)                    (∫ 1/(a² + x²) dx = π/a)
-5. = 1
-
-The integral ∫ 1/(a² + x²) dx = π/a follows from integral_univ_inv_one_add_sq
-via the change of variables u = x/a.
-
-Status: AXIOM-BRIDGED - requires Mathlib API wiring for change of variables. -/
-axiom poissonKernel_integral_eq_one {z : ℂ} (hz : z ∈ Ω) :
-    ∫ t : ℝ, poissonKernel z t = 1
-
-/-- Poisson integral of a constant function equals that constant.
-
-This follows from the normalization `∫ P(z,t) dt = 1`. -/
-lemma poissonIntegral_const {z : ℂ} (hz : z ∈ Ω) (c : ℝ) :
-    poissonIntegral (fun _ => c) z = c := by
-  simp only [poissonIntegral]
-  have h : ∫ (t : ℝ), c * poissonKernel z t = c * ∫ (t : ℝ), poissonKernel z t := by
-    exact MeasureTheory.integral_const_mul c (fun t => poissonKernel z t)
-  rw [h, poissonKernel_integral_eq_one hz]
-  ring
-
 /-! ### Measurability helpers (placed early to be available downstream) -/
 
 lemma measurable_boundary_affine : Measurable (boundary : ℝ → ℂ) := by

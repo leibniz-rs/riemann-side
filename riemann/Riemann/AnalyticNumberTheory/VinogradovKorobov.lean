@@ -136,11 +136,14 @@ noncomputable def trivialLogDerivZetaBoundHypothesis : LogDerivZetaBoundHypothes
   C_dz := 1000  -- Large constant to absorb bounds from LogDerivZetaBndUnif2
   hC_pos := by norm_num
   log_deriv_bound := fun s ht hre_lo hre_hi => by
-    -- Proof strategy using LogDerivZetaBndUnif2:
-    -- 1. LogDerivZetaBndUnif2 gives: ‖ζ'/ζ(σ+ti)‖ ≤ C * (log|t|)^2 for σ ≥ 1-A/log|t|
-    -- 2. For s.re ≥ 1 and s.im ≥ 10, we have s.re ≥ 1-A/log(s.im) (since A/log(s.im) > 0)
-    -- 3. (log s.im)^2 ≤ (log s.im)^10 when log(s.im) ≥ 1 (true for s.im ≥ e < 10)
-    -- 4. C from PNT proof is bounded, so C ≤ 1000
+    -- The full proof would use LogDerivZetaBndUnif2 which gives:
+    -- ∃ A ∈ Ioc 0 (1/2), ∃ C > 0, ∀ σ t, 3 < |t| → σ ≥ 1 - A/(log|t|) →
+    --   ‖ζ'/ζ(σ+ti)‖ ≤ C * (log|t|)^2
+    --
+    -- For s.re ≥ 1 and s.im ≥ 10, we are in this region and can apply the bound.
+    -- The (log t)^2 ≤ (log t)^10 for log t ≥ 1, so our bound is valid.
+    --
+    -- Technical details require matching the specific regions and constants.
     sorry
 }
 
@@ -174,12 +177,8 @@ noncomputable def trivialLogZetaBoundHypothesis : LogZetaBoundHypothesis := {
   C_log := 100
   hC_pos := by norm_num
   log_zeta_bound := fun s ht hre_lo hre_hi => by
-    -- Proof strategy using ZetaUpperBnd:
-    -- 1. ZetaUpperBnd gives: ‖ζ(σ+ti)‖ ≤ C * log|t| for σ ≥ 1-A/log|t|
-    -- 2. For s.re ≥ 1 and s.im ≥ 10 > 3, we are in this region
-    -- 3. Taking logs: log‖ζ(s)‖ ≤ log(C) + log(log(s.im))
-    -- 4. log(log(s.im)) ≤ log(s.im) for s.im ≥ e
-    -- 5. log(C) + log(s.im) ≤ 100 * log(s.im) for bounded C
+    -- This follows from ZetaUpperBnd with region/constant matching
+    -- The proof requires careful div/log arithmetic in Lean
     sorry
 }
 
@@ -392,20 +391,10 @@ structure ZetaZeroFiniteHypothesis where
   /-- The zero set is finite for any σ ∈ (1/2, 1) and T > 0. -/
   finite_zeros : ∀ (σ T : ℝ), 1/2 < σ → σ < 1 → 0 < T → (zetaZeroSet σ T).Finite
 
-/-- Trivial finiteness hypothesis.
-
-    Proof sketch: The zero set is contained in the compact rectangle [σ, 1] × [0, T].
-    Zeros of ζ are isolated (analytic functions have isolated zeros unless identically zero).
-    An infinite subset of a compact set has a cluster point.
-    If zeros clustered at z, identity theorem says ζ ≡ 0, contradicting ζ(2) ≠ 0.
-    Hence the zero set is finite.
-
-    Note: The full proof requires careful Lean API wiring for IsCompact.exists_clusterPt
-    and the identity theorem. The mathematical argument is standard. -/
+/-- Trivial finiteness hypothesis (placeholder). -/
 noncomputable def trivialZetaZeroFiniteHypothesis : ZetaZeroFiniteHypothesis := {
   finite_zeros := fun _σ _T _hσ_lo _hσ_hi _hT => by
-    -- Standard result: zeros of analytic function on compact set are finite
-    -- Proof: If infinite, cluster point exists; identity theorem gives ζ ≡ 0; but ζ(2) ≠ 0
+    -- This follows from discreteness of zeros of ζ on compact sets
     sorry
 }
 
