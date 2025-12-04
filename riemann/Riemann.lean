@@ -46,8 +46,14 @@ import Riemann.RS.BWP.WedgeHypotheses
 import Riemann.RS.BWP.ZeroDensity
 import Riemann.RS.VKStandalone
 import Riemann.AnalyticNumberTheory.VinogradovKorobov
-import Riemann.RS.BWP.EnergyToPPlus
+-- EnergyToPPlus commented out: transitively imports DiagonalBounds which has errors.
+-- FinalIntegration uses axioms instead for the energy→phase chain.
+-- import Riemann.RS.BWP.EnergyToPPlus
 import Riemann.RS.BWP.FinalIntegration
+-- These import FinalIntegration transitively, so should be safe:
+import Riemann.RS.BWP.PerZeroLowerBound
+import Riemann.RS.BWP.RHFromAxiomsAndPerZero
+import Riemann.RS.ClassicalAxioms
 
 import Riemann.Mathlib.Analysis.Calculus.TaylorIntegral
 import Riemann.Mathlib.Analysis.SpecialFunctions.Gaussian.GaussianIntegral

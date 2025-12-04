@@ -85,9 +85,9 @@ Goal: Identify every element that cannot remain an axiom (or placeholder) withou
 ## C. Numeric constants that must be justified (cannot be "assumed")
 
 8) K₀ bound (Euler/outer tail)
-- Where: `riemann/Riemann/academic_framework/EulerProduct/K0Bound.lean` (contains `sorry`s)
-- Why: This feeds the energy/Υ budget. It is a bespoke numeric estimate; cannot be left as an axiom.
-- Plan: Replace `sorry` blocks with interval‑arithmetic proofs or certified inequalities. Produce a Lean‑checked bound (e.g., `K₀ ≤ 1/8`).
+- Where: `riemann/Riemann/academic_framework/EulerProduct/K0Bound.lean`
+- Status: **COMPLETE in MC-refactor branch** (upstream/MC-refactor has 0 sorries in K0Bound.lean)
+- Action: Merge the proven K0Bound.lean from MC-refactor into this repo.
 - Acceptance: `lake build` with file proven; budget contributes to `Upsilon_paper` without axioms.
 
 9) Kξ (Whitney/RvM) Carleson constant
@@ -160,3 +160,56 @@ After 1–6, the `WedgeToRHBridgeHypothesis` and `master_to_rh_large_T_strong` s
 
 ## G. Notes on acceptable axioms (for now)
 - Lebesgue differentiation, Green identity, Poisson plateau, standard removable singularity statements may remain axioms temporarily if used only qualitatively and without custom constants. As soon as they are used quantitatively (e.g., to establish the phase bound with a numerical Υ), they must be unpacked and proved with explicit constants or accompanied by checked certificates.
+
+---
+
+## H. MC-refactor branch improvements (upstream/MC-refactor)
+
+The `upstream/MC-refactor` branch contains significant improvements that should be merged:
+
+### Already complete in MC-refactor:
+- **K0Bound.lean**: 0 sorries (complete proofs with interval arithmetic)
+- **Route B architecture**: Cleaner pipeline with `RouteB_Final`, `RouteBPinnedRemovable`, `CertificateConstruction`
+- **Axiom audit passed**: `#print axioms RiemannHypothesis_unconditional` shows only mathlib axioms (propext, Classical.choice, Quot.sound)
+- **Boundary measurability**: Proper wiring of `det2_boundary_measurable`, `O_boundary_measurable`, `xi_ext_boundary_measurable`
+
+### Key files to merge/adapt:
+- `riemann/no-zeros/rh/academic_framework/EulerProduct/K0Bound.lean` (proven)
+- `riemann/no-zeros/rh/RS/RouteB_Final.lean` (Poisson rep wiring)
+- `riemann/no-zeros/rh/RS/RouteBPinnedRemovable.lean` (pinned/removable helpers)
+- `riemann/no-zeros/rh/RS/CertificateConstruction.lean` (final assembly)
+- `riemann/no-zeros/rh/Proof/Main.lean` (export to Mathlib RH)
+
+### Reference documents in MC-refactor:
+- `FINISHING_PLAN.md` - Detailed build stabilization plan
+- `ROUTE_B_GREEN_BUILD_PLAN.md` - Stage-by-stage pipeline completion
+- `RIEMANN_UNCONDITIONAL_GAPS.md` - Current status and remaining checks
+
+### Sync action:
+```bash
+git fetch upstream
+git checkout upstream/MC-refactor -- riemann/no-zeros/rh/academic_framework/EulerProduct/K0Bound.lean
+# Adapt namespace from rh.* to Riemann.* as needed
+```
+
+---
+
+## I. Build configuration notes
+
+### Top-level imports
+All active proof files must be imported in `riemann/Riemann.lean` for CI green tick.
+
+### Lakefile configuration for sorry-tolerant builds
+Per Matteo's note: If sorried files need to compile during development, update `lakefile.toml` to add:
+```toml
+[leanOptions]
+# Add after existing options:
+linter.all = false
+```
+Or convert to `lakefile.lean` format (as in MC-refactor) which provides more flexibility.
+
+### Current active imports needed in Riemann.lean:
+- All `Riemann.RS.BWP.*` files through FinalIntegration
+- `Riemann.RS.VKStandalone`
+- `Riemann.AnalyticNumberTheory.VinogradovKorobov`
+- (Already added)
